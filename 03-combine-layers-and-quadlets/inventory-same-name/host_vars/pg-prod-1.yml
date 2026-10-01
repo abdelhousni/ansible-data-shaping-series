@@ -1,0 +1,3 @@
+---
+postgresql_server_conf:
+  max_connections: 200

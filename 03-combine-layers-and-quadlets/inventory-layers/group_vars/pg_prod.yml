@@ -1,0 +1,4 @@
+---
+postgresql_server_conf_group:
+  shared_buffers: 4GB
+  huge_pages: "on"

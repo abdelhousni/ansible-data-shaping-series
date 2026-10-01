@@ -12,3 +12,11 @@ roles:
     src: https://github.com/linux-system-roles/kernel_settings.git
     scm: git
     version: 1.6.0
+  - name: linux-system-roles.postgresql
+    src: https://github.com/linux-system-roles/postgresql.git
+    scm: git
+    version: 1.9.0
+  - name: linux-system-roles.podman
+    src: https://github.com/linux-system-roles/podman.git
+    scm: git
+    version: 1.14.3

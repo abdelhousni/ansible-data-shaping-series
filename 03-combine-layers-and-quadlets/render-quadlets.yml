@@ -1,0 +1,47 @@
+---
+# Builds podman_quadlet_specs in each variant and renders every container
+# with the podman role's own template, after the role's own key filter,
+# into out/<variant>/<name>.container. Nothing is installed or started.
+- name: Render the podman role's Quadlet template
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/quadlets.yml
+  vars:
+    # Copied from linux-system-roles.podman 1.14.3,
+    # tasks/handle_quadlet_spec.yml: the role's own keys, dropped before
+    # the unit file is written
+    __del_params: "^(file_src|file_content|file|run_as_user|run_as_group|\
+      systemd_unit_scope|name|type|state|activate_systemd_unit|template_src|\
+      pull_image|continue_if_pull_fails|registry_username|registry_password|\
+      restarts|restarts_on)$"
+  tasks:
+    - name: Make out/<variant>/
+      ansible.builtin.file:
+        path: "out/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ quadlet_variants.keys() | list }}"
+
+    - name: Write the unit file the role would write
+      ansible.builtin.template:
+        src: ../roles/linux-system-roles.podman/templates/systemd.j2
+        dest: "out/{{ item.0.key }}/{{ item.1.name }}.{{ item.1.type }}"
+        mode: "0644"
+      vars:
+        __podman_quadlet_spec: "{{ item.1 | dict2items
+          | rejectattr('key', 'match', __del_params) | list | items2dict }}"
+        __podman_quadlet_type: "{{ item.1.type }}"
+      loop: "{{ quadlet_variants | dict2items | subelements('value') }}"
+      loop_control:
+        label: "{{ item.0.key }}/{{ item.1.name }}"
+
+    - name: Merge the environment as dicts, then write it as NAME=value
+      ansible.builtin.copy:
+        dest: out/environment-as-dicts.txt
+        mode: "0644"
+        content: |
+          {% for name, environment in quadlet_environment.items() %}
+          {{ name }}: {{ quadlet_environment_base | combine(environment)
+                         | items | map('join', '=') | join(' ') }}
+          {% endfor %}

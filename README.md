@@ -9,6 +9,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 |---|---|
 | [`01-readable-sudoers-with-dict-kv/`](01-readable-sudoers-with-dict-kv/) | [Part 1: One sudoers line per command with community.general.dict_kv](https://til.housni.eu/ansible/readable-sudoers-with-dict-kv.html) |
 | [`02-lists-and-dicts-back-and-forth/`](02-lists-and-dicts-back-and-forth/) | [Part 2: Lists and dicts back and forth with dict2items, items2dict and zip](https://til.housni.eu/ansible/lists-and-dicts-dict2items-items2dict-zip.html) |
+| [`03-combine-layers-and-quadlets/`](03-combine-layers-and-quadlets/) | [Part 3: Merging dicts with combine](https://til.housni.eu/ansible/combine-recursive-list-merge-postgresql-quadlets.html) |
 
 ## Running them
 
@@ -25,9 +26,9 @@ PATH="$PWD/.venv/bin:$PATH" 01-readable-sudoers-with-dict-kv/run.sh
 
 - `requirements.txt` locks ansible-core 2.21.4 and its dependencies, with
   hashes. It's compiled from `requirements.in` with uv.
-- `requirements.yml` pins community.general 13.4.0 and the
-  `linux-system-roles.sudo` 1.5.0 and `linux-system-roles.kernel_settings`
-  1.6.0 roles.
+- `requirements.yml` pins community.general 13.4.0 and four Linux System
+  Roles: `sudo` 1.5.0, `kernel_settings` 1.6.0, `postgresql` 1.9.0 and
+  `podman` 1.14.3.
 - Each `run.sh` prints what its entry says about the result. Its
   `expected.txt` holds the output it gave when the entry was written.
 

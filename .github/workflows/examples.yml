@@ -35,6 +35,7 @@ jobs:
         example:
           - 01-readable-sudoers-with-dict-kv
           - 02-lists-and-dicts-back-and-forth
+          - 03-combine-layers-and-quadlets
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

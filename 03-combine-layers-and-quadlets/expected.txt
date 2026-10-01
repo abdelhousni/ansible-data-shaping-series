@@ -1,0 +1,33 @@
+postgresql.conf, inventory-same-name:
+  pg-test-1: ssl = on, shared_buffers = 128MB, huge_pages = try
+  pg-prod-1: max_connections = 200
+postgresql.conf, inventory-layers:
+  pg-test-1: ssl = on, shared_buffers = 128MB, huge_pages = try
+  pg-prod-1: ssl = on, shared_buffers = 4GB, huge_pages = on, max_connections = 200
+postgresql.conf, hash-merge:
+  pg-test-1: ssl = on, shared_buffers = 128MB, huge_pages = try
+  pg-prod-1: ssl = on, shared_buffers = 4GB, huge_pages = on, max_connections = 200
+quadlets, map-combine-base:
+  adminer: image missing, network appnet.network, environment TZ=UTC
+  caddy: image missing, network appnet.network, environment TZ=UTC
+  php: image missing, network appnet.network, environment TZ=UTC
+quadlets, flat:
+  adminer: image docker.io/library/adminer:latest, network missing, environment ADMINER_DEFAULT_SERVER=postgres
+  caddy: image docker.io/library/caddy:2-alpine, network missing, environment TZ=Europe/Brussels
+  php: image docker.io/library/php:8.3-fpm-alpine, network missing, environment TZ=UTC
+quadlets, recursive:
+  adminer: image docker.io/library/adminer:latest, network appnet.network, environment ADMINER_DEFAULT_SERVER=postgres
+  caddy: image docker.io/library/caddy:2-alpine, network appnet.network, environment TZ=Europe/Brussels
+  php: image docker.io/library/php:8.3-fpm-alpine, network appnet.network, environment TZ=UTC
+quadlets, append:
+  adminer: image docker.io/library/adminer:latest, network appnet.network, environment ADMINER_DEFAULT_SERVER=postgres
+  caddy: image docker.io/library/caddy:2-alpine, network appnet.network, environment TZ=UTC TZ=Europe/Brussels
+  php: image docker.io/library/php:8.3-fpm-alpine, network appnet.network, environment TZ=UTC TZ=UTC
+quadlets, append_rp:
+  adminer: image docker.io/library/adminer:latest, network appnet.network, environment ADMINER_DEFAULT_SERVER=postgres
+  caddy: image docker.io/library/caddy:2-alpine, network appnet.network, environment TZ=UTC TZ=Europe/Brussels
+  php: image docker.io/library/php:8.3-fpm-alpine, network appnet.network, environment TZ=UTC
+quadlets, environment merged as dicts:
+  adminer: TZ=UTC ADMINER_DEFAULT_SERVER=postgres
+  caddy: TZ=Europe/Brussels
+  php: TZ=UTC

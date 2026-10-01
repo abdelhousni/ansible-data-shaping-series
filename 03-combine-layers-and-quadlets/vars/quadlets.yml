@@ -1,0 +1,66 @@
+---
+# The Caddy + Adminer + PHP stack from the til entry on Podman Quadlet,
+# with what every container repeated moved into one base.
+quadlet_container_base:
+  type: container
+  Install:
+    WantedBy: default.target
+  Container:
+    Network: appnet.network
+    Environment:
+      - TZ=UTC
+
+quadlet_containers:
+  - name: adminer
+    Container:
+      Image: docker.io/library/adminer:latest
+      ContainerName: adminer
+      # One value, written as a string
+      Environment: ADMINER_DEFAULT_SERVER=postgres
+
+  - name: caddy
+    Container:
+      Image: docker.io/library/caddy:2-alpine
+      ContainerName: caddy
+      PublishPort: "80:80"
+      Volume:
+        - /srv/Caddyfile:/etc/caddy/Caddyfile:ro
+        - /srv/app:/srv:ro
+      # Meant to replace the base's TZ
+      Environment:
+        - TZ=Europe/Brussels
+
+  - name: php
+    Container:
+      Image: docker.io/library/php:8.3-fpm-alpine
+      ContainerName: php
+      Volume: /srv/app:/srv:ro
+      # Copied from before the base existed
+      Environment:
+        - TZ=UTC
+
+# How each variant builds podman_quadlet_specs from the two variables above
+quadlet_variants:
+  map-combine-base: "{{ quadlet_containers
+    | map('combine', quadlet_container_base) | list }}"
+  flat: "{{ [quadlet_container_base] | product(quadlet_containers)
+    | map('combine') | list }}"
+  recursive: "{{ [quadlet_container_base] | product(quadlet_containers)
+    | map('combine', recursive=True) | list }}"
+  append: "{{ [quadlet_container_base] | product(quadlet_containers)
+    | map('combine', recursive=True, list_merge='append') | list }}"
+  append_rp: "{{ [quadlet_container_base] | product(quadlet_containers)
+    | map('combine', recursive=True, list_merge='append_rp') | list }}"
+
+# The same environment variables kept as dicts, merged by name and turned
+# into Quadlet's NAME=value list at the end
+quadlet_environment_base:
+  TZ: UTC
+
+quadlet_environment:
+  adminer:
+    ADMINER_DEFAULT_SERVER: postgres
+  caddy:
+    TZ: Europe/Brussels
+  php:
+    TZ: UTC

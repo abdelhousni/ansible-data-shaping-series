@@ -1,0 +1,9 @@
+---
+postgresql_server_conf_all:
+  ssl: "on"
+  shared_buffers: 128MB
+  huge_pages: try
+
+postgresql_server_conf: "{{ postgresql_server_conf_all
+  | combine(postgresql_server_conf_group | default({}),
+            postgresql_server_conf_host | default({})) }}"

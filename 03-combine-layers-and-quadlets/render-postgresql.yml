@@ -1,0 +1,21 @@
+---
+# Renders the postgresql role's own postgresql.conf.j2 for each host, with
+# whatever postgresql_server_conf the inventory gives it, into out/.
+- name: Render the role's postgresql.conf template
+  hosts: all
+  gather_facts: false
+  vars:
+    inventory_label: "{{ ansible_inventory_sources[0] | basename }}"
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+      run_once: true
+
+    - name: Write the file the role would write
+      ansible.builtin.template:
+        src: ../roles/linux-system-roles.postgresql/templates/postgresql.conf.j2
+        dest: "out/{{ inventory_label }}-{{ inventory_hostname }}.conf"
+        mode: "0644"
