@@ -7,35 +7,95 @@
   gather_facts: false
   vars:
     proxmox_vms: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"
-    facts: "{{ lookup('file', 'fixtures/pg-prod-1_facts.json') | from_json }}"
-    interfaces: "{{ facts.interfaces | map('extract', facts) | list }}"
-    mount_points: "{{ facts.mounts | map(attribute='mount') | list }}"
+    pg_prod_1_facts: "{{ lookup('file', 'fixtures/pg-prod-1_facts.json') | from_json }}"
+    interfaces: "{{ pg_prod_1_facts.interfaces | map('extract', pg_prod_1_facts) | list }}"
+    mounts: "{{ pg_prod_1_facts.mounts }}"
+    mount_points: "{{ mounts | map(attribute='mount') | list }}"
+    docker_bind_mounts: [/etc/hosts, /etc/hostname, /etc/resolv.conf]
     paths:
       - /var/lib/pgsql/data/base
       - /srv/backups/daily
       - /srv/backups-old/base.tar
       - /etc/hosts.allow
+    # The message both failing expressions give, without the rest of the
+    # traceback
+    missing_attribute: "object of type 'dict' has no attribute '[a-z]+'"
+    # One line of out/picking.txt per key, in this order. Ansible evaluates
+    # each value when the file is written.
+    picks:
+      "proxmox: running on pve": >-
+        {{ proxmox_vms | selectattr('node', 'equalto', 'pve')
+           | selectattr('status', 'equalto', 'running') | map(attribute='name') | list }}
+      "proxmox: names of the stopped guests": >-
+        {{ proxmox_vms | rejectattr('status', 'equalto', 'running') | map(attribute='name') | list }}
+      "proxmox: the same, then select": >-
+        {{ proxmox_vms | rejectattr('status', 'equalto', 'running') | map(attribute='name') | select | list }}
+      "proxmox: pool defined": >-
+        {{ proxmox_vms | selectattr('pool', 'defined') | map(attribute='vmid') | list }}
+      "proxmox: pool not defined": >-
+        {{ proxmox_vms | rejectattr('pool', 'defined') | map(attribute='vmid') | list }}
+      "proxmox: selectattr('pool', 'equalto', 'pool1')": "{{ pool_equalto_error }}"
+      "proxmox: map(attribute='pool')": "{{ pool_map_error }}"
+      "proxmox: map(attribute='pool', default='-')": >-
+        {{ proxmox_vms | map(attribute='pool', default='-') | list }}
+      "proxmox: pool defined, then equalto pool1": >-
+        {{ proxmox_vms | selectattr('pool', 'defined') | selectattr('pool', 'equalto', 'pool1')
+           | map(attribute='vmid') | list }}
+      "proxmox: qemu with 1 GiB or more": >-
+        {{ proxmox_vms | selectattr('type', 'equalto', 'qemu') | selectattr('maxmem', 'ge', 1024**3)
+           | map(attribute='name') | list }}
+      "proxmox: match('test')": >-
+        {{ proxmox_vms | selectattr('name', 'match', 'test') | map(attribute='name') | list }}
+      "proxmox: match('lxc')": >-
+        {{ proxmox_vms | selectattr('name', 'match', 'lxc') | map(attribute='name') | list }}
+      "proxmox: search('lxc')": >-
+        {{ proxmox_vms | selectattr('name', 'search', 'lxc') | map(attribute='name') | list }}
+      "proxmox: names, select, unique": >-
+        {{ proxmox_vms | map(attribute='name') | select | unique | list }}
+      "facts: interfaces up": >-
+        {{ interfaces | selectattr('active') | map(attribute='device') | list }}
+      "facts: interfaces down": >-
+        {{ interfaces | rejectattr('active') | map(attribute='device') | list }}
+      "facts: IPv4 of the interfaces up, loopback aside": >-
+        {{ interfaces | selectattr('active') | rejectattr('type', 'equalto', 'loopback')
+           | map(attribute='ipv4.address') | list }}
+      "facts: under 32 MiB free": >-
+        {{ mounts | selectattr('size_available', 'lt', 32 * 1024**2) | map(attribute='mount') | list }}
+      "facts: under 10 % free": "{{ under_10_percent }}"
+      "facts: Docker's bind mounts aside": >-
+        {{ mounts | rejectattr('mount', 'in', docker_bind_mounts) | map(attribute='mount') | list }}
+      "facts: 'in' with a string": >-
+        {{ ['/etc/host', '/etc/hosts', '/etc/hosts.allow'] | select('in', '/etc/hosts.allow') | list }}
   tasks:
-    - name: Mounts with under 10 % free, one item at a time
+    - name: Collect the mounts with under 10 % free, one item at a time
       ansible.builtin.set_fact:
-        under_10_percent: "{{ under_10_percent | default([])
-          + [item.mount ~ ' (' ~ (100 * item.size_available / item.size_total) | round(2) ~ ' %)'] }}"
-      loop: "{{ facts.mounts }}"
+        under_10_percent: >-
+          {{ under_10_percent | default([])
+             + [item.mount ~ ' (' ~ (100 * item.size_available / item.size_total) | round(2) ~ ' %)'] }}
+      loop: "{{ mounts }}"
       loop_control:
         label: "{{ item.mount }}"
       when: item.size_available < item.size_total * 0.10
 
     - name: Try selectattr on an attribute some guests lack
-      ansible.builtin.debug:
-        msg: "{{ proxmox_vms | selectattr('pool', 'equalto', 'pool1') | list }}"
-      register: pool_equalto
-      ignore_errors: true
+      block:
+        - name: Select the guests in pool1
+          ansible.builtin.debug:
+            msg: "{{ proxmox_vms | selectattr('pool', 'equalto', 'pool1') | list }}"
+      rescue:
+        - name: Keep the error message
+          ansible.builtin.set_fact:
+            pool_equalto_error: "{{ ansible_failed_result.msg | regex_search(missing_attribute) }}"
 
     - name: Try map(attribute=) on the same attribute
-      ansible.builtin.debug:
-        msg: "{{ proxmox_vms | map(attribute='pool') | list }}"
-      register: pool_map
-      ignore_errors: true
+      block:
+        - name: List the pool of every guest
+          ansible.builtin.debug:
+            msg: "{{ proxmox_vms | map(attribute='pool') | list }}"
+      rescue:
+        - name: Keep the error message
+          ansible.builtin.set_fact:
+            pool_map_error: "{{ ansible_failed_result.msg | regex_search(missing_attribute) }}"
 
     - name: Make out/
       ansible.builtin.file:
@@ -48,28 +108,14 @@
         dest: out/picking.txt
         mode: "0644"
         content: |
-          proxmox: running on pve: {{ proxmox_vms | selectattr('node', 'equalto', 'pve') | selectattr('status', 'equalto', 'running') | map(attribute='name') | list }}
-          proxmox: names of the stopped guests: {{ proxmox_vms | rejectattr('status', 'equalto', 'running') | map(attribute='name') | list }}
-          proxmox: the same, then select: {{ proxmox_vms | rejectattr('status', 'equalto', 'running') | map(attribute='name') | select | list }}
-          proxmox: pool defined: {{ proxmox_vms | selectattr('pool', 'defined') | map(attribute='vmid') | list }}
-          proxmox: pool not defined: {{ proxmox_vms | rejectattr('pool', 'defined') | map(attribute='vmid') | list }}
-          proxmox: selectattr('pool', 'equalto', 'pool1'): {{ pool_equalto.msg | regex_search("object of type 'dict' has no attribute '[a-z]+'") | default('no error', true) }}
-          proxmox: map(attribute='pool'): {{ pool_map.msg | regex_search("object of type 'dict' has no attribute '[a-z]+'") | default('no error', true) }}
-          proxmox: map(attribute='pool', default='-'): {{ proxmox_vms | map(attribute='pool', default='-') | list }}
-          proxmox: pool defined, then equalto pool1: {{ proxmox_vms | selectattr('pool', 'defined') | selectattr('pool', 'equalto', 'pool1') | map(attribute='vmid') | list }}
-          proxmox: qemu with 1 GiB or more: {{ proxmox_vms | selectattr('type', 'equalto', 'qemu') | selectattr('maxmem', 'ge', 1024 ** 3) | map(attribute='name') | list }}
-          proxmox: match('test'): {{ proxmox_vms | selectattr('name', 'match', 'test') | map(attribute='name') | list }}
-          proxmox: match('lxc'): {{ proxmox_vms | selectattr('name', 'match', 'lxc') | map(attribute='name') | list }}
-          proxmox: search('lxc'): {{ proxmox_vms | selectattr('name', 'search', 'lxc') | map(attribute='name') | list }}
-          proxmox: names, select, unique: {{ proxmox_vms | map(attribute='name') | select | unique | list }}
-          facts: interfaces up: {{ interfaces | selectattr('active') | map(attribute='device') | list }}
-          facts: interfaces down: {{ interfaces | rejectattr('active') | map(attribute='device') | list }}
-          facts: IPv4 of the interfaces up, loopback aside: {{ interfaces | selectattr('active') | rejectattr('type', 'equalto', 'loopback') | map(attribute='ipv4.address') | list }}
-          facts: under 32 MiB free: {{ facts.mounts | selectattr('size_available', 'lt', 32 * 1024 ** 2) | map(attribute='mount') | list }}
-          facts: under 10 % free: {{ under_10_percent }}
-          facts: Docker's bind mounts aside: {{ facts.mounts | rejectattr('mount', 'in', ['/etc/hosts', '/etc/hostname', '/etc/resolv.conf']) | map(attribute='mount') | list }}
-          facts: 'in' with a string: {{ ['/etc/host', '/etc/hosts', '/etc/hosts.allow'] | select('in', '/etc/hosts.allow') | list }}
+          {% for label, value in picks.items() %}
+          {{ label }}: {{ value }}
+          {% endfor %}
           {% for path in paths %}
-          facts: mount point of {{ path }}, the docs' way: {{ facts.mounts | selectattr('mount', 'in', path) | list | sort(attribute='mount') | map(attribute='mount') | list | last | default('none') }}
-          facts: mount point of {{ path }}, by relpath: {{ mount_points | zip(mount_points | map('relpath', path)) | selectattr('1', 'match', '^\.\.?(/\.\.)*$') | map(attribute='0') | sort | last | default('none') }}
+          {% set substrings = mounts | selectattr('mount', 'in', path) %}
+          {% set by_substring = substrings | sort(attribute='mount') | map(attribute='mount') %}
+          {% set relative = mount_points | zip(mount_points | map('relpath', path)) %}
+          {% set by_relpath = relative | selectattr('1', 'match', '^\.\.?(/\.\.)*$') | map(attribute='0') | sort %}
+          facts: mount point of {{ path }}, the docs' way: {{ by_substring | last | default('none') }}
+          facts: mount point of {{ path }}, by relpath: {{ by_relpath | last | default('none') }}
           {% endfor %}
