@@ -1,0 +1,4 @@
+[
+  {"id": "qemu/100", "name": "pxe.home.arpa", "node": "pve", "status": "running", "type": "qemu", "vmid": 100},
+  {"id": "qemu/101", "name": "test1", "node": "pve", "status": "stopped", "type": "qemu", "vmid": 101}
+]

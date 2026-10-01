@@ -1,0 +1,24 @@
+postgres_sudo_spec_base:
+  users: ["%postgres"]
+  hosts: ["ALL"]
+  operators: ["root"]
+  tags: ["NOPASSWD"]
+
+postgres_sudo_commands:
+  - ["/usr/bin/systemctl start postgresql.service"]
+  - ["/usr/bin/systemctl stop postgresql.service"]
+  - ["/usr/bin/systemctl restart postgresql.service"]
+  - ["/usr/bin/systemctl try-restart postgresql.service"]
+  - ["/usr/bin/systemctl --no-pager status postgresql.service"]
+  - ["/usr/bin/systemctl reload postgresql.service"]
+  - ["/usr/bin/systemctl force-reload postgresql.service"]
+  - ["/usr/bin/journalctl --no-pager -u postgresql.service"]
+  - ["sudoedit /var/lib/pgsql/data/postgresql.conf"]
+
+sudo_sudoers_files:
+  - path: /etc/sudoers.d/40-postgresql
+    user_specifications: >-
+      {{ postgres_sudo_commands
+         | map('community.general.dict_kv', 'commands')
+         | map('combine', postgres_sudo_spec_base)
+         | list }}

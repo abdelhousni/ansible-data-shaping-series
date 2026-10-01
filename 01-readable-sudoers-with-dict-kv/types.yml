@@ -1,0 +1,22 @@
+---
+# Writes the type and the first item at each step of the dict_kv chain.
+- name: Types at each step of the dict_kv chain
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/c-dict-kv.yml
+  vars:
+    steps:
+      - "{{ postgres_sudo_commands }}"
+      - "{{ postgres_sudo_commands | map('community.general.dict_kv', 'commands') }}"
+      - "{{ postgres_sudo_commands | map('community.general.dict_kv', 'commands') | map('combine', postgres_sudo_spec_base) }}"
+  tasks:
+    - name: Write one line per step to out/types.txt
+      ansible.builtin.copy:
+        dest: out/types.txt
+        mode: "0644"
+        content: |
+          {% for step in steps %}
+          {{ step | type_debug }} of {{ step | first | type_debug }}: {{ step | first | to_json(sort_keys=true) }}
+          {% endfor %}

@@ -1,0 +1,56 @@
+---
+# items2dict on Foreman and Proxmox data, the podman role's key filter, and
+# zip + dict(). Writes the results to out/lists-to-dicts.txt.
+- name: Lists to dicts and back
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # GET /api/hosts/12, as recorded in theforeman.foreman's test fixtures.
+    foreman_host: "{{ lookup('file', 'fixtures/foreman_host.json') | from_json }}"
+    foreman_params: "{{ foreman_host.all_parameters | items2dict(key_name='name', value_name='value') }}"
+
+    # The sample from community.proxmox.proxmox_vm_info's documentation, trimmed.
+    proxmox_vms: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"
+    vmid_by_name: "{{ proxmox_vms | items2dict(key_name='name', value_name='vmid') }}"
+    name_by_vmid: "{{ proxmox_vms | items2dict(key_name='vmid', value_name='name') }}"
+    with_duplicate: "{{ proxmox_vms + [{'name': 'test1', 'vmid': 105}] }}"
+
+    # A quadlet spec as the podman role takes it, and the role's own filter.
+    adminer_spec:
+      name: adminer
+      type: container
+      Install:
+        WantedBy: default.target
+      Container:
+        Image: docker.io/library/adminer:latest
+        ContainerName: adminer
+        Network: appnet.network
+    __del_params: "^(file_src|file_content|file|run_as_user|run_as_group|\
+      systemd_unit_scope|name|type|state|activate_systemd_unit|template_src|\
+      pull_image|continue_if_pull_fails|registry_username|registry_password|\
+      restarts|restarts_on)$"
+
+    new_vm_names: [pg1, pg2, pg3]
+  tasks:
+    - name: Create the output directory
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Write the results
+      ansible.builtin.copy:
+        dest: out/lists-to-dicts.txt
+        mode: "0644"
+        content: |
+          foreman: all_parameters is a {{ foreman_host.all_parameters | type_debug }} of {{ foreman_host.all_parameters | length }}
+          foreman: items2dict gives a {{ foreman_params | type_debug }}: {{ foreman_params }}
+          foreman: host_registration_insights = {{ foreman_params['host_registration_insights'] }}
+          proxmox: name -> vmid: {{ vmid_by_name }}
+          proxmox: vmid -> name: {{ name_by_vmid }}, keys are {{ name_by_vmid.keys() | first | type_debug }}
+          proxmox: two VMs named test1: {{ with_duplicate | items2dict(key_name='name', value_name='vmid') }}
+          podman: quadlet sections left: {{ adminer_spec | dict2items | rejectattr('key', 'match', __del_params) | list | items2dict }}
+          zip: {{ new_vm_names | zip(range(300, 303)) | type_debug }}: {{ new_vm_names | zip(range(300, 303)) }}
+          zip + dict: {{ dict(new_vm_names | zip(range(300, 303))) }}
+          zip + dict, one ID short: {{ dict(new_vm_names | zip(range(300, 302))) }}
+          zip_longest + dict, one ID short: {{ dict(new_vm_names | zip_longest(range(300, 302))) }}

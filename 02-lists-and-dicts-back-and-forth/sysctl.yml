@@ -1,0 +1,24 @@
+---
+# Hands a dict of sysctl settings to the kernel_settings role in three shapes,
+# and runs only the role's own input checks (assert_role_vars.yml). Nothing on
+# the machine is changed.
+- name: Check three shapes of kernel_settings_sysctl against the role
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # PostgreSQL's documentation suggests both: strict overcommit, and huge
+    # pages sized from shared_memory_size_in_huge_pages.
+    postgresql_sysctl:
+      vm.overcommit_memory: 2
+      vm.nr_hugepages: 3170
+    shapes:
+      as_dict: "{{ postgresql_sysctl }}"
+      dict2items: "{{ postgresql_sysctl | dict2items }}"
+      name_value: "{{ postgresql_sysctl | dict2items(key_name='name', value_name='value') }}"
+  tasks:
+    - name: Run the role's input checks
+      ansible.builtin.include_role:
+        name: linux-system-roles.kernel_settings
+        tasks_from: assert_role_vars
+      vars:
+        kernel_settings_sysctl: "{{ shapes[shape] }}"

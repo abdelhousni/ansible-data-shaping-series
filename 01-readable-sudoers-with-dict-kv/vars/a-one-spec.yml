@@ -1,0 +1,17 @@
+sudo_sudoers_files:
+  - path: /etc/sudoers.d/40-postgresql
+    user_specifications:
+      - users: ["%postgres"]
+        hosts: ["ALL"]
+        operators: ["root"]
+        tags: ["NOPASSWD"]
+        commands:
+          - /usr/bin/systemctl start postgresql.service
+          - /usr/bin/systemctl stop postgresql.service
+          - /usr/bin/systemctl restart postgresql.service
+          - /usr/bin/systemctl try-restart postgresql.service
+          - /usr/bin/systemctl status postgresql.service
+          - /usr/bin/systemctl reload postgresql.service
+          - /usr/bin/systemctl force-reload postgresql.service
+          - /usr/bin/journalctl -u postgresql.service
+          - /usr/bin/vim /var/lib/pgsql/*

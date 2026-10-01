@@ -1,0 +1,14 @@
+---
+collections:
+  - name: community.general
+    version: 13.4.0
+
+roles:
+  - name: linux-system-roles.sudo
+    src: https://github.com/linux-system-roles/sudo.git
+    scm: git
+    version: 1.5.0
+  - name: linux-system-roles.kernel_settings
+    src: https://github.com/linux-system-roles/kernel_settings.git
+    scm: git
+    version: 1.6.0

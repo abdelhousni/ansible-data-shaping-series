@@ -1,0 +1,19 @@
+kernel_settings, as_dict: the role's checks failed
+  kernel_settings_sysctl must be a list of dictionaries or {"state": "empty"}, got dict
+kernel_settings, dict2items: the role's checks failed
+  kernel_settings_sysctl[0] is invalid: {'key': 'vm.overcommit_memory', 'value': 2}
+  kernel_settings_sysctl[1] is invalid: {'key': 'vm.nr_hugepages', 'value': 3170}
+kernel_settings, name_value: the role's checks passed
+items2dict, an item without 'value':
+  items2dict requires each dictionary in the list to contain the keys 'name' and 'value', got [{'name': 'a', 'value': 1}, {'name': 'b'}] instead
+foreman: all_parameters is a list of 2
+foreman: items2dict gives a dict: {'host_registration_remote_execution': True, 'host_registration_insights': False}
+foreman: host_registration_insights = False
+proxmox: name -> vmid: {'pxe.home.arpa': 100, 'test1': 101}
+proxmox: vmid -> name: {100: 'pxe.home.arpa', 101: 'test1'}, keys are int
+proxmox: two VMs named test1: {'pxe.home.arpa': 100, 'test1': 105}
+podman: quadlet sections left: {'Install': {'WantedBy': 'default.target'}, 'Container': {'Image': 'docker.io/library/adminer:latest', 'ContainerName': 'adminer', 'Network': 'appnet.network'}}
+zip: list: [['pg1', 300], ['pg2', 301], ['pg3', 302]]
+zip + dict: {'pg1': 300, 'pg2': 301, 'pg3': 302}
+zip + dict, one ID short: {'pg1': 300, 'pg2': 301}
+zip_longest + dict, one ID short: {'pg1': 300, 'pg2': 301, 'pg3': None}
