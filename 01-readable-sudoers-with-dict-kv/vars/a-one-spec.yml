@@ -14,4 +14,3 @@ sudo_sudoers_files:
           - /usr/bin/systemctl reload postgresql.service
           - /usr/bin/systemctl force-reload postgresql.service
           - /usr/bin/journalctl -u postgresql.service
-          - /usr/bin/vim /var/lib/pgsql/*

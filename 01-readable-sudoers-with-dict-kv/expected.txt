@@ -1,9 +1,8 @@
-a-one-spec: visudo accepted it, 1 rule line(s), the longest 434 characters
-b-anchors: visudo accepted it, 9 rule line(s), the longest 81 characters
-c-dict-kv: visudo accepted it, 9 rule line(s), the longest 81 characters
-e-safer: visudo accepted it, 9 rule line(s), the longest 86 characters
+a-one-spec: visudo accepted it, 1 rule line(s), the longest 403 characters
+b-anchors: visudo accepted it, 8 rule line(s), the longest 81 characters
+c-dict-kv: visudo accepted it, 8 rule line(s), the longest 81 characters
 b-anchors and c-dict-kv: byte-identical
-d-flat-strings: visudo rejected it, 9 times 'expected a fully-qualified path name'
+d-flat-strings: visudo rejected it, 8 times 'expected a fully-qualified path name'
   first rule as rendered: %postgres ALL=(root) NOPASSWD: /, u, s, r, /, b, i, n, /, s, y, s, …
   out/d-flat-strings-40-postgresql: not written
 types:

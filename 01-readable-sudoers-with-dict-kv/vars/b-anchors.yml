@@ -23,5 +23,3 @@ sudo_sudoers_files:
         commands: ["/usr/bin/systemctl force-reload postgresql.service"]
       - <<: *postgres_sudo_spec_base
         commands: ["/usr/bin/journalctl -u postgresql.service"]
-      - <<: *postgres_sudo_spec_base
-        commands: ["/usr/bin/vim /var/lib/pgsql/*"]

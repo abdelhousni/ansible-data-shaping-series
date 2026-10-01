@@ -1,0 +1,8 @@
+visudo accepted both files
+unsafe: check failed
+  WARN starts a pager without --no-pager: /usr/bin/systemctl status postgresql.service
+  WARN starts a pager without --no-pager: /usr/bin/journalctl -u postgresql.service
+  FAIL vim can start a shell or write any file as root: /usr/bin/vim /var/lib/pgsql/*
+  FAIL a wildcard in the arguments also matches extra arguments: /usr/bin/vim /var/lib/pgsql/*
+safer: check passed
+  OK

@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 rm -rf out
 
-for v in a-one-spec b-anchors c-dict-kv e-safer; do
+for v in a-one-spec b-anchors c-dict-kv; do
   ansible-playbook render.yml -e "variant=$v" >/dev/null
   f="out/$v-40-postgresql"
   echo "$v: visudo accepted it, $(grep -c '^%postgres' "$f") rule line(s), the longest $(grep '^%postgres' "$f" | awk '{ print length }' | sort -n | tail -1) characters"

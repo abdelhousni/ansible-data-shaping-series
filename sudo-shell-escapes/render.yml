@@ -1,0 +1,26 @@
+---
+# Renders the sudo role's own template with one of the vars files, the way the
+# role does, and validates the result with visudo. Nothing is installed: the
+# files land in out/.
+- name: Render sudoers drop-ins with the linux-system-roles.sudo template
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - "vars/{{ variant }}.yml"
+  tasks:
+    - name: Create the output directory
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Render and validate each sudoers file
+      ansible.builtin.template:
+        src: ../roles/linux-system-roles.sudo/templates/sudoers.j2
+        dest: "out/{{ variant }}-{{ item.path | basename }}"
+        mode: "0440"
+        validate: visudo -cf %s
+      loop: "{{ sudo_sudoers_files }}"
+      loop_control:
+        label: "{{ item.path }}"

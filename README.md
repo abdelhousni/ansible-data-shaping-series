@@ -11,6 +11,12 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`02-lists-and-dicts-back-and-forth/`](02-lists-and-dicts-back-and-forth/) | [Part 2: Lists and dicts back and forth with dict2items, items2dict and zip](https://til.housni.eu/ansible/lists-and-dicts-dict2items-items2dict-zip.html) |
 | [`03-combine-layers-and-quadlets/`](03-combine-layers-and-quadlets/) | [Part 3: Merging dicts with combine](https://til.housni.eu/ansible/combine-recursive-list-merge-postgresql-quadlets.html) |
 
+Related entry, outside the series:
+
+| Directory | Entry |
+|---|---|
+| [`sudo-shell-escapes/`](sudo-shell-escapes/) | [Sudo rules that hand out a root shell, and a CI check that refuses them](https://til.housni.eu/linux/sudo-rules-that-hand-out-a-root-shell.html) |
+
 ## Running them
 
 Everything runs on the local machine and changes nothing outside the
@@ -34,4 +40,6 @@ PATH="$PWD/.venv/bin:$PATH" 01-readable-sudoers-with-dict-kv/run.sh
 
 The [`examples`](.github/workflows/examples.yml) workflow runs every
 `run.sh` on each push and compares the output with `expected.txt`. It also
-checks that `requirements.txt` still matches `requirements.in`.
+checks that `requirements.txt` still matches `requirements.in`, and its
+`sudoers-policy` job runs `sudo-shell-escapes/check-sudoers.sh` as a gate
+on the sudoers files rendered from the safer rules.
