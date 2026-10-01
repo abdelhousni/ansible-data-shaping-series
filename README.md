@@ -10,6 +10,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`01-readable-sudoers-with-dict-kv/`](01-readable-sudoers-with-dict-kv/) | [Part 1: One sudoers line per command with community.general.dict_kv](https://til.housni.eu/ansible/readable-sudoers-with-dict-kv.html) |
 | [`02-lists-and-dicts-back-and-forth/`](02-lists-and-dicts-back-and-forth/) | [Part 2: Lists and dicts back and forth with dict2items, items2dict and zip](https://til.housni.eu/ansible/lists-and-dicts-dict2items-items2dict-zip.html) |
 | [`03-combine-layers-and-quadlets/`](03-combine-layers-and-quadlets/) | [Part 3: Merging dicts with combine](https://til.housni.eu/ansible/combine-recursive-list-merge-postgresql-quadlets.html) |
+| [`04-picking-from-lists/`](04-picking-from-lists/) | [Part 4: Picking from a list of dicts with selectattr, rejectattr and map](https://til.housni.eu/ansible/selectattr-rejectattr-map-proxmox-guests-and-facts.html) |
 
 Related entry, outside the series:
 

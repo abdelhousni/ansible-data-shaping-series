@@ -1,0 +1,29 @@
+proxmox: running on pve: ['pxe.home.arpa', 'test-lxc.home.arpa']
+proxmox: names of the stopped guests: ['test1', 'test1-lxc.home.arpa', 'test-lxc.home.arpa', '']
+proxmox: the same, then select: ['test1', 'test1-lxc.home.arpa', 'test-lxc.home.arpa']
+proxmox: pool defined: [101, 103, 104, 105]
+proxmox: pool not defined: [100, 102]
+proxmox: selectattr('pool', 'equalto', 'pool1'): object of type 'dict' has no attribute 'pool'
+proxmox: map(attribute='pool'): object of type 'dict' has no attribute 'pool'
+proxmox: map(attribute='pool', default='-'): ['-', 'pool1', '-', 'pool1', 'pool1', 'pool1']
+proxmox: pool defined, then equalto pool1: [101, 103, 104, 105]
+proxmox: qemu with 1 GiB or more: ['pxe.home.arpa']
+proxmox: match('test'): ['test1', 'test-lxc.home.arpa', 'test1-lxc.home.arpa', 'test-lxc.home.arpa']
+proxmox: match('lxc'): []
+proxmox: search('lxc'): ['test-lxc.home.arpa', 'test1-lxc.home.arpa', 'test-lxc.home.arpa']
+proxmox: names, select, unique: ['pxe.home.arpa', 'test1', 'test-lxc.home.arpa', 'test1-lxc.home.arpa']
+facts: interfaces up: ['eth0', 'lo']
+facts: interfaces down: ['eth1']
+facts: IPv4 of the interfaces up, loopback aside: ['172.17.0.2']
+facts: under 32 MiB free: ['/var/lib/pgsql']
+facts: under 10 % free: ['/etc/resolv.conf (0.13 %)', '/etc/hostname (0.13 %)', '/etc/hosts (0.13 %)', '/var/lib/pgsql (6.18 %)']
+facts: Docker's bind mounts aside: ['/srv/backups', '/var/lib/pgsql']
+facts: 'in' with a string: ['/etc/host', '/etc/hosts', '/etc/hosts.allow']
+facts: mount point of /var/lib/pgsql/data/base, the docs' way: /var/lib/pgsql
+facts: mount point of /var/lib/pgsql/data/base, by relpath: /var/lib/pgsql
+facts: mount point of /srv/backups/daily, the docs' way: /srv/backups
+facts: mount point of /srv/backups/daily, by relpath: /srv/backups
+facts: mount point of /srv/backups-old/base.tar, the docs' way: /srv/backups
+facts: mount point of /srv/backups-old/base.tar, by relpath: none
+facts: mount point of /etc/hosts.allow, the docs' way: /etc/hosts
+facts: mount point of /etc/hosts.allow, by relpath: none
