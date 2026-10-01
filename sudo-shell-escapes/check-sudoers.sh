@@ -3,11 +3,24 @@
 # Checks sudoers files before they are installed: visudo for the syntax, then
 # sudoers-policy.jq on what cvtsudoers makes of them. Prints every finding and
 # exits 1 if any file has a FAIL. Needs visudo and cvtsudoers (both ship with
-# sudo) and jq.
+# sudo), jq and curl.
+#
+# The policy asks GTFOBins (https://gtfobins.org/) which programs work
+# through sudo. It downloads https://gtfobins.org/api.json, or reads the
+# file named by GTFOBINS_API to pin a saved copy.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
-status=0
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
 
+api=${GTFOBINS_API:-}
+if [ -z "$api" ]; then
+  api=$tmp/api.json
+  curl -fsSL https://gtfobins.org/api.json -o "$api"
+fi
+jq -f "$here/gtfobins-sudo.jq" "$api" >"$tmp/gtfobins-sudo.json"
+
+status=0
 for f in "$@"; do
   if ! visudo -cqf "$f"; then
     echo "$f: FAIL visudo rejected it"
@@ -15,7 +28,8 @@ for f in "$@"; do
     continue
   fi
   findings=$(cvtsudoers -e -f json "$f" \
-    | jq -r --rawfile escapes "$here/shell-escape-commands.txt" \
+    | jq -r --rawfile interactive "$here/interactive-commands.txt" \
+         --slurpfile gtfo "$tmp/gtfobins-sudo.json" \
          -f "$here/sudoers-policy.jq")
   if [ -z "$findings" ]; then
     echo "$f: OK"

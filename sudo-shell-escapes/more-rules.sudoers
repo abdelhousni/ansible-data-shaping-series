@@ -1,0 +1,10 @@
+# One rule per case the check knows about, for run.sh. Not for a real host.
+%admins ALL=(ALL) ALL
+%ops ALL=(root) NOEXEC: /usr/bin/less /var/log/messages
+%ops ALL=(root) /usr/bin/tail ^/var/log/[^[:space:]]*$, !/usr/bin/su
+Cmnd_Alias PG = /usr/bin/psql *
+%dba ALL=(postgres) PG
+%backup ALL=(root) /usr/bin/tar, /usr/bin/python3 /opt/backup/run.py
+%backup ALL=(root) /usr/bin/cat "", /usr/local/bin/
+%ops ALL=(root) /usr/bin/systemctl start nginx.service, /usr/bin/systemctl
+%ops ALL=(root) /usr/bin/find /var/log -name *.gz

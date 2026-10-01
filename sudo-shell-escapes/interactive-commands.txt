@@ -1,0 +1,42 @@
+# Programs that start a shell or write any file as root whatever their
+# arguments: a rule that names one of them is refused, NOEXEC or not, since
+# NOEXEC stops a shell escape but not an editor or a pager opening another
+# file. The categories are the sudoers manual's ("Preventing shell
+# escapes"): shells, editors, pagers, mail and terminal programs.
+# For every other program, check-sudoers.sh asks GTFOBins.
+
+# Shells
+sh
+bash
+dash
+zsh
+ksh
+csh
+tcsh
+fish
+
+# Editors: grant sudoedit instead
+vi
+vim
+view
+rvim
+vimdiff
+nano
+pico
+emacs
+ed
+ex
+
+# Pagers
+less
+more
+most
+man
+
+# Mail and terminal programs
+mail
+mailx
+mutt
+screen
+tmux
+script

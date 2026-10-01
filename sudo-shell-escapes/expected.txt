@@ -1,8 +1,16 @@
-visudo accepted both files
-unsafe: check failed
+visudo accepted both rendered files
+unsafe-40-postgresql: check failed
   WARN starts a pager without --no-pager: /usr/bin/systemctl status postgresql.service
   WARN starts a pager without --no-pager: /usr/bin/journalctl -u postgresql.service
-  FAIL vim can start a shell or write any file as root: /usr/bin/vim /var/lib/pgsql/*
-  FAIL a wildcard in the arguments also matches extra arguments: /usr/bin/vim /var/lib/pgsql/*
-safer: check passed
+  FAIL vim can start a shell or write any file as root, whatever its arguments: /usr/bin/vim /var/lib/pgsql/*
+  FAIL a wildcard in the arguments also matches extra arguments; GTFOBins lists sudo functions for vim: /usr/bin/vim /var/lib/pgsql/*
+safer-40-postgresql: check passed
   OK
+more-rules.sudoers: check failed
+  FAIL runs any command, a shell included: ALL
+  FAIL less can start a shell or write any file as root, whatever its arguments: /usr/bin/less /var/log/messages
+  FAIL a wildcard in the arguments also matches extra arguments; GTFOBins lists sudo functions for psql: /usr/bin/psql *
+  FAIL any arguments are allowed, and GTFOBins lists sudo functions for tar: /usr/bin/tar
+  FAIL runs any program in the directory: /usr/local/bin/
+  FAIL any arguments are allowed, and GTFOBins lists sudo functions for systemctl: /usr/bin/systemctl
+  FAIL a wildcard in the arguments also matches extra arguments; GTFOBins lists sudo functions for find: /usr/bin/find /var/log -name *.gz
