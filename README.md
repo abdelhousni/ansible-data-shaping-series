@@ -20,6 +20,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`11-data-from-other-hosts/`](11-data-from-other-hosts/) | [Part 11: Data from other hosts with extract and hostvars](https://til.housni.eu/ansible/data-from-other-hosts-extract-hostvars-pg-hba.html) |
 | [`12-grouping-and-merging/`](12-grouping-and-merging/) | [Part 12: Grouping and merging lists of dicts](https://til.housni.eu/ansible/groupby-lists-mergeby-proxmox-guests.html) |
 | [`13-json-query/`](13-json-query/) | [Part 13: json_query compared with native filters](https://til.housni.eu/ansible/json-query-jmespath-versus-native-filters.html) |
+| [`14-network-data/`](14-network-data/) | [Part 14: Network data with ansible.utils](https://til.housni.eu/ansible/ansible-utils-ipaddr-pg-hba-subnets-proxmox.html) |
 
 Related entry, outside the series:
 

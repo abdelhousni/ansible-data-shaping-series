@@ -1,0 +1,48 @@
+"10.10.0.0/24":
+  ipaddr: "10.10.0.0/24"
+  ipaddr('net'): "10.10.0.0/24"
+  ipaddr('subnet'): "10.10.0.0/24"
+  is ansible.utils.ip: True
+"10.20.0.5/24":
+  ipaddr: "10.20.0.5/24"
+  ipaddr('net'): null
+  ipaddr('subnet'): "10.20.0.0/24"
+  is ansible.utils.ip: False
+"10.40.0.0":
+  ipaddr: "10.40.0.0"
+  ipaddr('net'): null
+  ipaddr('subnet'): "10.40.0.0/32"
+  is ansible.utils.ip: True
+"10.30.0.0/33":
+  ipaddr: false
+  ipaddr('net'): false
+  ipaddr('subnet'): false
+  is ansible.utils.ip: False
+"db.example":
+  ipaddr: false
+  ipaddr('net'): false
+  ipaddr('subnet'): false
+  is ansible.utils.ip: False
+"2001:db8::/64":
+  ipaddr: "2001:db8::/64"
+  ipaddr('net'): "2001:db8::/64"
+  ipaddr('subnet'): "2001:db8::/64"
+  is ansible.utils.ip: True
+the whole list through ipaddr('net'): ['10.10.0.0/24', '2001:db8::/64']
+rejected: ['10.20.0.5/24', '10.40.0.0', '10.30.0.0/33', 'db.example']
+assert: not a network with a prefix: 10.20.0.5/24, 10.40.0.0, 10.30.0.0/33, db.example
+10.10.0.0/16 in /24s: 256, the first two:
+  10.10.0.0/24 and 10.10.1.0/24
+guests, each at its VMID in its node's /24:
+  100 on pve: 10.10.0.100/24
+  101 on pve2: 10.10.1.101/24
+  102 on pve: 10.10.0.102/24
+  103 on pve2: 10.10.1.103/24
+  104 on pve2: 10.10.1.104/24
+  105 on pve2: 10.10.1.105/24
+a VMID beyond the /24, 300:
+  ipaddr(300): False
+  ipmath(300): 10.10.1.44,
+    in 10.10.0.0/24: False
+ipaddr(-1), the last address: 10.10.0.255/24,
+  usable: False

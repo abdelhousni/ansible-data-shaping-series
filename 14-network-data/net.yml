@@ -1,0 +1,63 @@
+---
+# Validates the client subnets with ansible.utils, keeps the right ones for
+# the pg_hba rules, and gives each recorded Proxmox guest an address in its
+# node's subnet. Writes everything to out/net.txt.
+- name: Shape network data with ansible.utils
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/network.yml
+  vars:
+    vms: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"
+    inputs: "{{ pg_client_subnets_input }}"
+    # Each input next to what ipaddr('net') makes of it; '' and False mean no
+    checked: "{{ inputs | zip(inputs | map('ansible.utils.ipaddr', 'net')) }}"
+    rejected: "{{ checked | rejectattr('1') | map('first') | list }}"
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Check that every client subnet is a network
+      block:
+        - name: Assert that no input was rejected
+          ansible.builtin.assert:
+            that: rejected | length == 0
+            fail_msg: "not a network with a prefix: {{ rejected | join(', ') }}"
+            quiet: true
+      rescue:
+        - name: Keep the assert's message
+          ansible.builtin.set_fact:
+            subnet_check: "{{ ansible_failed_result.msg }}"
+
+    - name: Write out/net.txt
+      ansible.builtin.copy:
+        dest: out/net.txt
+        mode: "0644"
+        content: |
+          {% for value in inputs %}
+          {{ value | to_json }}:
+            ipaddr: {{ value | ansible.utils.ipaddr | to_json }}
+            ipaddr('net'): {{ value | ansible.utils.ipaddr('net') | to_json }}
+            ipaddr('subnet'): {{ value | ansible.utils.ipaddr('subnet') | to_json }}
+            is ansible.utils.ip: {{ value is ansible.utils.ip }}
+          {% endfor %}
+          the whole list through ipaddr('net'): {{ inputs | ansible.utils.ipaddr('net') }}
+          rejected: {{ rejected }}
+          assert: {{ subnet_check | default('every client subnet is a network') }}
+          {{ guest_range }} in /24s: {{ guest_range | ansible.utils.ipsubnet(24) }}, the first two:
+            {{ guest_range | ansible.utils.ipsubnet(24, 0) }} and {{ guest_range | ansible.utils.ipsubnet(24, 1) }}
+          guests, each at its VMID in its node's /24:
+          {% for vm in vms %}
+          {% set subnet = guest_range | ansible.utils.ipsubnet(24, proxmox_nodes.index(vm.node)) %}
+            {{ vm.vmid }} on {{ vm.node }}: {{ subnet | ansible.utils.ipaddr(vm.vmid) }}
+          {% endfor %}
+          a VMID beyond the /24, 300:
+            ipaddr(300): {{ '10.10.0.0/24' | ansible.utils.ipaddr(300) }}
+            ipmath(300): {{ '10.10.0.0' | ansible.utils.ipmath(300) }},
+              in 10.10.0.0/24: {{ '10.10.0.0' | ansible.utils.ipmath(300) is ansible.utils.in_network('10.10.0.0/24') }}
+          ipaddr(-1), the last address: {{ '10.10.0.0/24' | ansible.utils.ipaddr(-1) }},
+            usable: {{ '10.10.0.0/24' | ansible.utils.network_in_usable('10.10.0.255') }}
