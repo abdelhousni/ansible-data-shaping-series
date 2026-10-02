@@ -21,6 +21,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`12-grouping-and-merging/`](12-grouping-and-merging/) | [Part 12: Grouping and merging lists of dicts](https://til.housni.eu/ansible/groupby-lists-mergeby-proxmox-guests.html) |
 | [`13-json-query/`](13-json-query/) | [Part 13: json_query compared with native filters](https://til.housni.eu/ansible/json-query-jmespath-versus-native-filters.html) |
 | [`14-network-data/`](14-network-data/) | [Part 14: Network data with ansible.utils](https://til.housni.eu/ansible/ansible-utils-ipaddr-pg-hba-subnets-proxmox.html) |
+| [`15-set-fact-or-expression/`](15-set-fact-or-expression/) | [Part 15: set_fact in a loop or one expression](https://til.housni.eu/ansible/set-fact-loop-or-one-expression-pg-hba.html) |
 
 Related entry, outside the series:
 

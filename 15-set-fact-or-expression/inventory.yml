@@ -1,0 +1,23 @@
+---
+# Written by: python3 make-inventory.py 6
+all:
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  children:
+    app:
+      hosts:
+        app1:
+          app_ipv4: 10.10.0.2
+        app2:
+          app_ipv4: 10.10.0.3
+        app3:
+          app_ipv4: 10.10.0.4
+        app4:
+          app_ipv4: 10.10.0.5
+        app5:
+          app_ipv4: 10.10.0.6
+        app6:
+    db:
+      hosts:
+        db1:

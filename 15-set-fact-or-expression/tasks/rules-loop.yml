@@ -1,0 +1,8 @@
+---
+# One rule per app host with an address, appended to rules_loop
+- name: Append a rule for each app host
+  ansible.builtin.set_fact:
+    rules_loop: "{{ rules_loop | default([]) + [pg_hba_base
+      | combine({'database': 'app', 'address': hostvars[item].app_ipv4 ~ '/32'})] }}"
+  loop: "{{ groups['app'] }}"
+  when: hostvars[item].app_ipv4 is defined

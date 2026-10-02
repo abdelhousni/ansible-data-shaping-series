@@ -1,0 +1,11 @@
+app hosts: 6, with an address: 5
+one expression:
+  hostssl app all 10.10.0.2/32 scram-sha-256
+  hostssl app all 10.10.0.3/32 scram-sha-256
+  hostssl app all 10.10.0.4/32 scram-sha-256
+  hostssl app all 10.10.0.5/32 scram-sha-256
+  hostssl app all 10.10.0.6/32 scram-sha-256
+set_fact loop, run once: the same rules: True
+set_fact loop, run twice: 10 rules
+with task vars rules_loop: [], the task saw 10 rules
+a later play with vars rules_loop: [] saw 10 rules
