@@ -1,0 +1,12 @@
+---
+pg_hba_base:
+  type: hostssl
+  user: all
+  auth_method: scram-sha-256
+pg_databases: [app]
+# Local connections through the Unix socket, before any network rule
+pg_hba_local:
+  - type: local
+    database: all
+    user: all
+    auth_method: peer

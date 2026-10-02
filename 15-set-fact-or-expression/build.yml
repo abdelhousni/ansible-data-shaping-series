@@ -1,0 +1,66 @@
+---
+# Builds the PostgreSQL server's pg_hba rules from the app hosts' addresses
+# twice, with a set_fact loop and with one expression, as in part 11, and
+# records how each behaves when the tasks run again or something tries to
+# reset the result. Writes out/build.txt.
+- name: Build the rules both ways
+  hosts: db
+  gather_facts: false
+  vars_files:
+    - vars/pg_hba.yml
+  vars:
+    # One expression: hostvars of each app host, those with an address, one
+    # rule each
+    rules_expression: "{{ [pg_hba_base] | product([{'database': 'app'}],
+      groups['app'] | map('extract', hostvars) | selectattr('app_ipv4', 'defined')
+      | map(attribute='app_ipv4') | map('regex_replace', '$', '/32') | map('community.general.dict_kv', 'address'))
+      | map('combine') | list }}"
+    rule_fields: [type, database, user, address, auth_method]
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Build the rules in a loop, one app host at a time
+      ansible.builtin.include_tasks: tasks/rules-loop.yml
+
+    - name: Keep the loop's first result
+      ansible.builtin.set_fact:
+        rules_after_one_loop: "{{ rules_loop }}"
+
+    - name: Run the same tasks again, as a second include or role call would
+      ansible.builtin.include_tasks: tasks/rules-loop.yml
+
+    - name: Read the result with task vars that try to reset it
+      ansible.builtin.set_fact:
+        rules_seen_with_task_vars: "{{ rules_loop | length }}"
+      vars:
+        rules_loop: []
+
+    - name: Write out/build.txt
+      ansible.builtin.copy:
+        dest: out/build.txt
+        mode: "0644"
+        content: |
+          app hosts: {{ groups['app'] | length }}, with an address: {{ rules_expression | length }}
+          one expression:
+          {% for rule in rules_expression %}
+            {{ rule_fields | map('extract', rule) | join(' ') }}
+          {% endfor %}
+          set_fact loop, run once: the same rules: {{ rules_after_one_loop == rules_expression }}
+          set_fact loop, run twice: {{ rules_loop | length }} rules
+          with task vars rules_loop: [], the task saw {{ rules_seen_with_task_vars }} rules
+
+- name: A later play on the same host
+  hosts: db
+  gather_facts: false
+  vars:
+    rules_loop: []
+  tasks:
+    - name: Append what this play sees
+      ansible.builtin.lineinfile:
+        path: out/build.txt
+        line: "a later play with vars rules_loop: [] saw {{ rules_loop | length }} rules"
+        mode: "0644"

@@ -1,0 +1,15 @@
+---
+# The expression alone, for time.sh. set_fact makes Ansible evaluate it,
+# once.
+- name: Build the rules with one expression
+  hosts: db
+  gather_facts: false
+  vars_files:
+    - vars/pg_hba.yml
+  tasks:
+    - name: Evaluate the expression
+      ansible.builtin.set_fact:
+        rules_expression: "{{ [pg_hba_base] | product([{'database': 'app'}],
+          groups['app'] | map('extract', hostvars) | selectattr('app_ipv4', 'defined')
+          | map(attribute='app_ipv4') | map('regex_replace', '$', '/32') | map('community.general.dict_kv', 'address'))
+          | map('combine') | list }}"

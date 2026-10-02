@@ -1,0 +1,10 @@
+---
+# The set_fact loop alone, for time.sh
+- name: Build the rules with a set_fact loop
+  hosts: db
+  gather_facts: false
+  vars_files:
+    - vars/pg_hba.yml
+  tasks:
+    - name: Build the rules in a loop
+      ansible.builtin.include_tasks: tasks/rules-loop.yml
