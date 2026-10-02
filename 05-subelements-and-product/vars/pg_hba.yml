@@ -1,0 +1,21 @@
+---
+# pg_hba input for the postgresql system role, two ways.
+
+# Every database is reachable from every client subnet: product
+pg_databases: [app, reporting]
+pg_client_subnets: [10.10.0.0/24, 10.20.0.0/24]
+
+# What every rule shares. On the left of the product, so the per-rule keys
+# win, as in part 3.
+pg_hba_base:
+  type: hostssl
+  user: all
+  auth_method: scram-sha-256
+
+# Each database lists its own clients: subelements
+pg_databases_own_clients:
+  - name: app
+    clients: [10.10.0.0/24, 10.20.0.0/24]
+  - name: reporting
+    clients: [10.30.0.0/24]
+  - name: scratch    # local connections only, no clients key

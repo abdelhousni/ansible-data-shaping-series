@@ -1,0 +1,88 @@
+---
+# Loops over part 3's Quadlet containers × each container's own Volume list
+# with subelements, and writes what each step gives to out/volumes.txt.
+- name: Host directories for Quadlet volumes
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../03-combine-layers-and-quadlets/vars/quadlets.yml
+  vars:
+    # The message part of each error, without the rest of the traceback
+    subelements_error: "could not find '[^']+' key in iterated item|the key '[^']+' should point to a list"
+    # php's Volume written as a list, as part 3 recommends for any key that
+    # may hold several values
+    containers_listed: "{{ quadlet_containers
+      | rejectattr('name', 'equalto', 'php') | list
+      + [quadlet_containers | selectattr('name', 'equalto', 'php') | first
+         | combine({'Container': {'Volume': ['/srv/app:/srv:ro']}}, recursive=True)] }}"
+    volume_pairs: "{{ containers_listed | subelements('Container.Volume', skip_missing=True) }}"
+    host_sources: "{{ volume_pairs | map(attribute='1') | map('split', ':') | map('first') | unique | list }}"
+    # Bind sources that are files; Quadlet can't tell them apart from the
+    # Volume line, so the playbook has to be told
+    host_files: [/srv/Caddyfile]
+  tasks:
+    - name: Try subelements without skip_missing
+      block:
+        - name: Pair every container with each of its volumes
+          ansible.builtin.debug:
+            msg: "{{ quadlet_containers | subelements('Container.Volume') }}"
+      rescue:
+        - name: Keep the error message
+          ansible.builtin.set_fact:
+            error_no_skip: "{{ ansible_failed_result.msg | regex_search(subelements_error) }}"
+
+    - name: Try subelements with skip_missing
+      block:
+        - name: Pair every container with each of its volumes, skipping containers without any
+          ansible.builtin.debug:
+            msg: "{{ quadlet_containers | subelements('Container.Volume', skip_missing=True) }}"
+      rescue:
+        - name: Keep the error message
+          ansible.builtin.set_fact:
+            error_skip: "{{ ansible_failed_result.msg | regex_search(subelements_error) }}"
+
+    # linux-system-roles.podman, tasks/handle_quadlet_spec.yml: the host
+    # paths the role creates when podman_create_host_directories is true
+    - name: Compute the podman role's host directories, 1.14.3 and upstream main
+      ansible.builtin.set_fact:
+        role_paths: "{{ role_paths | default({}) | combine({item.name: {'1.14.3': role_1_14_3, 'main': role_main}}) }}"
+      vars:
+        volumes: "{{ item.get('Container', {}).get('Volume', []) }}"
+        role_1_14_3: "{{ volumes | map('regex_search', '^([^:]+):.+$')
+          | reject('search', '[.]volume$') | select | list }}"
+        role_main: "{{ ([volumes] if volumes is string else volumes)
+          | map('regex_search', '^([./][^:]*):/.*$', '\\1') | select | map('first') | list }}"
+      loop: "{{ quadlet_containers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Create a directory for every bind source that isn't a file, under out/
+      ansible.builtin.file:
+        path: "out{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ host_sources | difference(host_files) }}"
+
+    - name: Write out/volumes.txt
+      ansible.builtin.copy:
+        dest: out/volumes.txt
+        mode: "0644"
+        content: |
+          subelements('Container.Volume'): {{ error_no_skip }}
+          subelements('Container.Volume', skip_missing=True): {{ error_skip }}
+          with php's Volume as a list:
+          {% for container, volume in volume_pairs %}
+            {{ container.name }}: {{ volume }}
+          {% endfor %}
+          bind sources, unique: {{ host_sources }}
+          directories to create: {{ host_sources | difference(host_files) }}
+          the podman role's host directories:
+          {% for name, paths in role_paths.items() %}
+            {{ name }}: 1.14.3 {{ paths['1.14.3'] }}, main {{ paths['main'] }}
+          {% endfor %}

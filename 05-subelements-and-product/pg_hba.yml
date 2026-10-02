@@ -1,0 +1,80 @@
+---
+# Builds postgresql_pg_hba_conf for the postgresql system role with product
+# and with subelements, renders each with the role's own template into
+# out/, and writes the rules to out/pg_hba.txt.
+- name: Build pg_hba rules for the postgresql role
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/pg_hba.yml
+  vars:
+    # Local connections through the Unix socket, before any network rule
+    pg_hba_local:
+      - type: local
+        database: all
+        user: all
+        auth_method: peer
+    # Every database × every subnet, each rule merged onto the base
+    pg_hba_product: "{{ [pg_hba_base]
+      | product(pg_databases | map('community.general.dict_kv', 'database'),
+                pg_client_subnets | map('community.general.dict_kv', 'address'))
+      | map('combine') | list }}"
+    # Each database × its own clients only: (database, subnet) pairs, split
+    # into two lists of one-key dicts, zipped back and merged onto the base
+    pg_pairs: "{{ pg_databases_own_clients | subelements('clients', skip_missing=True) }}"
+    pg_hba_subelements: "{{ [pg_hba_base]
+      | product(pg_pairs | map(attribute='0.name') | map('community.general.dict_kv', 'database')
+                | zip(pg_pairs | map(attribute='1') | map('community.general.dict_kv', 'address'))
+                | map('combine'))
+      | map('combine') | list }}"
+    # The same product with no subnet left
+    pg_hba_no_subnets: "{{ [pg_hba_base]
+      | product(pg_databases | map('community.general.dict_kv', 'database'),
+                [] | map('community.general.dict_kv', 'address'))
+      | map('combine') | list }}"
+    rule_fields: [type, database, user, address, auth_method]
+    product_summary: "{{ pg_databases | length }} databases × {{ pg_client_subnets | length }} subnets
+      = {{ pg_hba_product | length }} rules"
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Write the pg_hba.conf the role would write, for each way
+      ansible.builtin.template:
+        src: ../roles/linux-system-roles.postgresql/templates/pg_hba.conf.j2
+        dest: "out/pg_hba-{{ item.key }}.conf"
+        mode: "0644"
+      vars:
+        postgresql_pg_hba_conf: "{{ pg_hba_local + item.value }}"
+      loop: "{{ {'product': pg_hba_product, 'subelements': pg_hba_subelements} | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Check that every database has a network rule, with no subnet left
+      block:
+        - name: Assert that the rules aren't empty
+          ansible.builtin.assert:
+            that: pg_hba_no_subnets | length > 0
+            fail_msg: "no network rule: pg_client_subnets is empty"
+      rescue:
+        - name: Keep the assert's message
+          ansible.builtin.set_fact:
+            no_subnets_check: "{{ ansible_failed_result }}"
+
+    - name: Write out/pg_hba.txt
+      ansible.builtin.copy:
+        dest: out/pg_hba.txt
+        mode: "0644"
+        content: |
+          product: {{ product_summary }}
+          {% for rule in pg_hba_product %}
+            {{ rule_fields | map('extract', rule) | join(' ') }}
+          {% endfor %}
+          subelements: {{ pg_pairs | length }} rules, from {{ pg_databases_own_clients | length }} databases
+          {% for rule in pg_hba_subelements %}
+            {{ rule_fields | map('extract', rule) | join(' ') }}
+          {% endfor %}
+          product with no subnet: {{ pg_hba_no_subnets | length }} rules, assert: {{ no_subnets_check.msg }}
