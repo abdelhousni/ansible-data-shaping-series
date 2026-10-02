@@ -1,0 +1,41 @@
+running on pve:
+  native:     ['pxe.home.arpa', 'test-lxc.home.arpa']
+  json_query: ['pxe.home.arpa', 'test-lxc.home.arpa']
+  same: True
+not running:
+  native:     ['test1', 'test1-lxc.home.arpa', 'test-lxc.home.arpa', '']
+  json_query: ['test1', 'test1-lxc.home.arpa', 'test-lxc.home.arpa', '']
+  same: True
+in a pool:
+  native:     [101, 103, 104, 105]
+  json_query: [101, 103, 104, 105]
+  same: True
+in pool1:
+  native:     [101, 103, 104, 105]
+  json_query: [101, 103, 104, 105]
+  same: True
+every pool:
+  native:     ['-', 'pool1', '-', 'pool1', 'pool1', 'pool1']
+  json_query: ['pool1', 'pool1', 'pool1', 'pool1']
+  same: False
+VMs with 1 GiB or more:
+  native:     ['pxe.home.arpa']
+  json_query: ['pxe.home.arpa']
+  same: True
+names containing lxc:
+  native:     ['test-lxc.home.arpa', 'test1-lxc.home.arpa', 'test-lxc.home.arpa']
+  json_query: ['test-lxc.home.arpa', 'test1-lxc.home.arpa', 'test-lxc.home.arpa']
+  same: True
+VMIDs by status:
+  native:     {'running': [100, 102], 'stopped': [101, 103, 104, 105]}
+  json_query: {'running': [100, 102], 'stopped': [101, 103, 104, 105]}
+  same: True
+the same comparison, quoted three ways:
+  [?vmid==`100`].name => ['pxe.home.arpa']
+  [?vmid=='100'].name => []
+  [?vmid=="100"].name => []
+  [?vmid==100].name => invalid token: Parse error at column 8
+a value with a quote, concatenated: Bad jmespath expression: Unclosed ' delimiter:
+the same value, as a JSON literal: [?node==`"o'brien"`].vmid
+  => []
+contains() on a string from YAML: ['alpha']

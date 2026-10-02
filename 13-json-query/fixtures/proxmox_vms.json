@@ -1,0 +1,66 @@
+[
+ {
+  "id": "qemu/100",
+  "name": "pxe.home.arpa",
+  "node": "pve",
+  "status": "running",
+  "template": false,
+  "type": "qemu",
+  "vmid": 100,
+  "maxmem": 4294967296
+ },
+ {
+  "id": "qemu/101",
+  "name": "test1",
+  "node": "pve2",
+  "pool": "pool1",
+  "status": "stopped",
+  "template": false,
+  "type": "qemu",
+  "vmid": 101,
+  "maxmem": 536870912
+ },
+ {
+  "id": "lxc/102",
+  "name": "test-lxc.home.arpa",
+  "node": "pve",
+  "status": "running",
+  "template": false,
+  "type": "lxc",
+  "vmid": 102,
+  "maxmem": 536870912
+ },
+ {
+  "id": "lxc/103",
+  "name": "test1-lxc.home.arpa",
+  "node": "pve2",
+  "pool": "pool1",
+  "status": "stopped",
+  "template": false,
+  "type": "lxc",
+  "vmid": 103,
+  "maxmem": 536870912
+ },
+ {
+  "id": "lxc/104",
+  "name": "test-lxc.home.arpa",
+  "node": "pve2",
+  "pool": "pool1",
+  "status": "stopped",
+  "template": false,
+  "type": "lxc",
+  "vmid": 104,
+  "maxmem": 536870912
+ },
+ {
+  "id": "lxc/105",
+  "name": "",
+  "node": "pve2",
+  "pool": "pool1",
+  "status": "stopped",
+  "template": false,
+  "type": "lxc",
+  "vmid": 105,
+  "maxmem": 536870912
+ }
+]

@@ -1,0 +1,98 @@
+---
+# Runs part 4's selections on the recorded Proxmox guests twice, with native
+# filters and with community.general.json_query, and writes both results,
+# whether they agree, and the json_query pitfalls to out/query.txt.
+- name: Compare json_query with native filters
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    vms: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"
+    # Each case: the native expression's result and the JMESPath query
+    cases:
+      - name: running on pve
+        native: "{{ vms | selectattr('node', 'equalto', 'pve') | selectattr('status', 'equalto', 'running')
+          | map(attribute='name') | list }}"
+        query: "[?node=='pve' && status=='running'].name"
+      - name: not running
+        native: "{{ vms | rejectattr('status', 'equalto', 'running') | map(attribute='name') | list }}"
+        query: "[?status!='running'].name"
+      - name: in a pool
+        native: "{{ vms | selectattr('pool', 'defined') | map(attribute='vmid') | list }}"
+        query: "[?pool].vmid"
+      - name: in pool1
+        native: "{{ vms | selectattr('pool', 'defined') | selectattr('pool', 'equalto', 'pool1')
+          | map(attribute='vmid') | list }}"
+        query: "[?pool=='pool1'].vmid"
+      - name: every pool
+        native: "{{ vms | map(attribute='pool', default='-') | list }}"
+        query: "[*].pool"
+      - name: VMs with 1 GiB or more
+        native: "{{ vms | selectattr('type', 'equalto', 'qemu') | selectattr('maxmem', 'ge', 1024**3)
+          | map(attribute='name') | list }}"
+        query: "[?type=='qemu' && maxmem >= `1073741824`].name"
+      - name: names containing lxc
+        native: "{{ vms | selectattr('name', 'search', 'lxc') | map(attribute='name') | list }}"
+        query: "[?contains(name, 'lxc')].name"
+      - name: VMIDs by status
+        native: "{{ dict(vms | groupby('status') | map('first')
+          | zip(vms | groupby('status') | map('last') | map('map', attribute='vmid') | map('list'))) }}"
+        query: "{running: [?status=='running'].vmid, stopped: [?status=='stopped'].vmid}"
+    # The same comparison, quoted three ways
+    vmid_queries:
+      - "[?vmid==`100`].name"
+      - "[?vmid=='100'].name"
+      - '[?vmid=="100"].name'
+    odd_node: "o'brien"
+    # The value as a JSON literal, between backticks
+    literal_query: "{{ '[?node==`' ~ (odd_node | to_json) ~ '`].vmid' }}"
+    yaml_names: [{name: alpha}]
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Compare with a bare number
+      block:
+        - name: Query vmid==100 without backticks
+          ansible.builtin.set_fact:
+            bare_number: "{{ vms | community.general.json_query('[?vmid==100].name') }}"
+      rescue:
+        - name: Keep the error's first line
+          ansible.builtin.set_fact:
+            bare_number: "{{ ansible_failed_result.msg | regex_search('invalid token: [^,]*') }}"
+
+    - name: Put a value with a quote into the query
+      block:
+        - name: Query for the node o'brien by concatenation
+          ansible.builtin.set_fact:
+            concatenated: "{{ vms | community.general.json_query(\"[?node=='\" ~ odd_node ~ \"'].vmid\") }}"
+      rescue:
+        - name: Keep the error's first line
+          ansible.builtin.set_fact:
+            concatenated: "{{ ansible_failed_result.msg | regex_search('Bad jmespath expression: [^\\n]*') }}"
+
+    - name: Write out/query.txt
+      ansible.builtin.copy:
+        dest: out/query.txt
+        mode: "0644"
+        content: |
+          {% for case in cases %}
+          {% set queried = vms | community.general.json_query(case.query) %}
+          {{ case.name }}:
+            native:     {{ case.native }}
+            json_query: {{ queried }}
+            same: {{ case.native == queried }}
+          {% endfor %}
+          the same comparison, quoted three ways:
+          {% for query in vmid_queries %}
+            {{ query }} => {{ vms | community.general.json_query(query) }}
+          {% endfor %}
+            [?vmid==100].name => {{ bare_number }}
+          a value with a quote, concatenated: {{ concatenated }}
+          {% set contains_query = "[?contains(name, 'lph')].name" %}
+          the same value, as a JSON literal: {{ literal_query }}
+            => {{ vms | community.general.json_query(literal_query) }}
+          contains() on a string from YAML: {{ yaml_names | community.general.json_query(contains_query) }}
