@@ -1,0 +1,53 @@
+---
+# Compares the declared guests with part 4's recorded proxmox_vm_info data
+# and writes each set operation's result to out/drift.txt, and the guest
+# names, unsorted and sorted, to out/names-<label>.txt.
+- name: Compare declared Proxmox guests with the cluster
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/declared.yml
+  vars:
+    proxmox_vms: "{{ lookup('file', '../04-picking-from-lists/fixtures/proxmox_vms.json') | from_json }}"
+    actual_vmids: "{{ proxmox_vms | map(attribute='vmid') | list }}"
+    actual_names: "{{ proxmox_vms | map(attribute='name') | select | list }}"
+    # A label for the output files, so run.sh can compare two runs
+    run_label: default
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Write out/drift.txt
+      ansible.builtin.copy:
+        dest: out/drift.txt
+        mode: "0644"
+        content: |
+          actual: {{ actual_vmids }}
+          declared: {{ declared_vmids }}
+          declared, unique: {{ declared_vmids | unique }}
+          missing, declared | difference(actual): {{ declared_vmids | difference(actual_vmids) }}
+          strays, actual | difference(declared): {{ actual_vmids | difference(declared_vmids) }}
+          matching, declared | intersect(actual): {{ declared_vmids | intersect(actual_vmids) }}
+          drift, declared | symmetric_difference(actual): {{ declared_vmids | symmetric_difference(actual_vmids) }}
+          everything, declared | union(actual): {{ declared_vmids | union(actual_vmids) }}
+          missing, sorted: {{ declared_vmids | difference(actual_vmids) | sort }}
+          strays, sorted: {{ actual_vmids | difference(declared_vmids) | sort }}
+          missing, declared as strings: {{ declared_vmids_as_strings | difference(actual_vmids) | sort }}
+          missing, strings through int: {{ declared_vmids_as_strings | map('int') | difference(actual_vmids) | sort }}
+          dicts, difference keeps order: {{ proxmox_vms | difference(proxmox_vms[:2]) | map(attribute='vmid') | list }}
+
+    - name: Write every guest name, declared or found, unsorted and sorted
+      ansible.builtin.copy:
+        dest: "out/names-{{ run_label }}-{{ item.key }}.txt"
+        mode: "0644"
+        content: "{{ item.value | join('\n') }}\n"
+      loop:
+        - key: unsorted
+          value: "{{ declared_names | union(actual_names) }}"
+        - key: sorted
+          value: "{{ declared_names | union(actual_names) | sort }}"
+      loop_control:
+        label: "{{ item.key }}"

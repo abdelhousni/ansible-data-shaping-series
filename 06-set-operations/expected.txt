@@ -1,0 +1,19 @@
+actual: [100, 101, 102, 103, 104, 105]
+declared: [106, 100, 101, 104, 101]
+declared, unique: [106, 100, 101, 104]
+missing, declared | difference(actual): [106]
+strays, actual | difference(declared): [105, 102, 103]
+matching, declared | intersect(actual): [104, 100, 101]
+drift, declared | symmetric_difference(actual): [102, 103, 105, 106]
+everything, declared | union(actual): [100, 101, 102, 103, 104, 105, 106]
+missing, sorted: [106]
+strays, sorted: [102, 103, 105]
+missing, declared as strings: ['100', '101', '104', '106']
+missing, strings through int: [106]
+dicts, difference keeps order: [102, 103, 104, 105]
+names, unsorted: the file differs between runs
+  run 1: test-lxc.home.arpa test1-lxc.home.arpa pxe.home.arpa test1 pg1
+  run 2: test1-lxc.home.arpa pg1 test-lxc.home.arpa test1 pxe.home.arpa
+names, sorted: same file in both runs
+  run 1: pg1 pxe.home.arpa test-lxc.home.arpa test1 test1-lxc.home.arpa
+  run 2: pg1 pxe.home.arpa test-lxc.home.arpa test1 test1-lxc.home.arpa

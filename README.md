@@ -12,6 +12,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`03-combine-layers-and-quadlets/`](03-combine-layers-and-quadlets/) | [Part 3: Merging dicts with combine](https://til.housni.eu/ansible/combine-recursive-list-merge-postgresql-quadlets.html) |
 | [`04-picking-from-lists/`](04-picking-from-lists/) | [Part 4: Picking from a list of dicts with selectattr, rejectattr and map](https://til.housni.eu/ansible/selectattr-rejectattr-map-proxmox-guests-and-facts.html) |
 | [`05-subelements-and-product/`](05-subelements-and-product/) | [Part 5: subelements versus product](https://til.housni.eu/ansible/subelements-versus-product-quadlet-volumes-pg-hba.html) |
+| [`06-set-operations/`](06-set-operations/) | [Part 6: Set operations on lists](https://til.housni.eu/ansible/set-operations-union-difference-proxmox-drift.html) |
 
 Related entry, outside the series:
 

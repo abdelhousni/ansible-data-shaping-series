@@ -1,0 +1,10 @@
+---
+# The guests the Proxmox cluster should have, by VMID. 106 is new and not
+# created yet; 101 is listed twice by mistake.
+declared_vmids: [106, 100, 101, 104, 101]
+
+# The same VMIDs as they arrive from a form, a CSV or an extra var: strings
+declared_vmids_as_strings: ["106", "100", "101", "104"]
+
+# The guests' names, for a file such as an inventory or a monitoring list
+declared_names: [pxe.home.arpa, test1, pg1, test-lxc.home.arpa]
