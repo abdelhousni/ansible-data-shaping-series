@@ -1,0 +1,56 @@
+defaults:
+  restart: true (bool)
+  max_connections: 100 (int)
+  when: restart: ran
+  when: restart | bool: ran
+  max_connections > 150: False
+  max_connections | int > 150: False
+key-value:
+  restart: "false" (str)
+  max_connections: "200" (str)
+  when: restart: error: Conditional result (True) was derived from value of type 'str'
+  when: restart | bool: skipped
+  max_connections > 150: error: '>' not supported between instances of '_AnsibleTaggedStr' and 'int'
+  max_connections | int > 150: True
+json:
+  restart: false (bool)
+  max_connections: 200 (int)
+  when: restart: skipped
+  when: restart | bool: skipped
+  max_connections > 150: True
+  max_connections | int > 150: True
+typo:
+  restart: "fasle" (str)
+  max_connections: 100 (int)
+  when: restart: error: Conditional result (True) was derived from value of type 'str'
+  when: restart | bool: skipped
+  max_connections > 150: False
+  max_connections | int > 150: False
+allow-broken:
+  restart: "false" (str)
+  max_connections: 100 (int)
+  when: restart: ran
+  when: restart | bool: skipped
+  max_connections > 150: False
+  max_connections | int > 150: False
+conversions:
+  "200" | int: 200
+  " 200 " | int: 200
+  "4GB" | int: 0
+  "2.5" | int: 2
+  "0x1F" | int: 0
+  "4GB" | int(-1): -1
+  "0x1F" | int(0, 16): 31
+  "2.5" | float: 2.5
+  200 | string: "200"
+  "yes" | bool: True
+  "On" | bool: True
+  "1" | bool: True
+  "true" | bool: True
+  "no" | bool: False
+  "OFF" | bool: False
+  "0" | bool: False
+  "false" | bool: False
+deprecation warnings:
+  DEPRECATION WARNING]: Conditional result (True) was derived from value of type 'str' at "<CLI option '-e'>". Conditionals must have a boolean result. This feature will be removed from ansible-core version 2.23.
+  DEPRECATION WARNING]: The `bool` filter coerced invalid value 'fasle' (str) to False. This feature will be removed from ansible-core version 2.23.
