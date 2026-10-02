@@ -38,6 +38,7 @@ jobs:
           - 03-combine-layers-and-quadlets
           - 04-picking-from-lists
           - 05-subelements-and-product
+          - 06-set-operations
           - sudo-shell-escapes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
