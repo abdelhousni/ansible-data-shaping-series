@@ -1,0 +1,14 @@
+---
+# Client subnets for part 5's pg_hba rules, as typed into a form: two right,
+# and the usual mistakes.
+pg_client_subnets_input:
+  - 10.10.0.0/24
+  - 10.10.0.11/32    # one host, as part 11's rules
+  - 10.20.0.5/24     # a host address with a prefix: host or subnet?
+  - 10.40.0.0        # no prefix
+  - 10.30.0.0/33     # no such prefix in IPv4
+  - db.example       # a name, not an address
+  - 2001:db8::/64
+# One /24 per Proxmox node, carved out of this range in node order
+guest_range: 10.10.0.0/16
+proxmox_nodes: [pve, pve2]
