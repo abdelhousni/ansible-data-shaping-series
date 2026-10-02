@@ -1,0 +1,30 @@
+with the fact cache:
+  groups['app']: ['app1', 'app2', 'app3']
+  extract with a nested path: error: object of type 'dict' has no attribute 'default_ipv4'
+  app hosts with an address: ['app1', 'app2']
+  assert: no address in the facts of: app3
+  rules:
+    hostssl app all 10.10.0.11/32 scram-sha-256
+    hostssl app all 10.10.0.12/32 scram-sha-256
+with --limit db1:
+  groups['app']: ['app1', 'app2', 'app3']
+  extract with a nested path: error: object of type 'dict' has no attribute 'default_ipv4'
+  app hosts with an address: ['app1', 'app2']
+  assert: no address in the facts of: app3
+  rules:
+    hostssl app all 10.10.0.11/32 scram-sha-256
+    hostssl app all 10.10.0.12/32 scram-sha-256
+with the fact cache emptied:
+  groups['app']: ['app1', 'app2', 'app3']
+  extract with a nested path: error: object of type 'dict' has no attribute 'default_ipv4'
+  app hosts with an address: []
+  assert: no address in the facts of: app1, app2, app3
+  rules:
+gather-missing:
+  app hosts without facts, before: ['app1', 'app2', 'app3']
+  app hosts without facts, after: []
+  app3's system, from ansible_facts: Linux
+  app3's system, from the top-level variable: Linux
+  db1's own facts: none
+deprecation warning:
+  DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.

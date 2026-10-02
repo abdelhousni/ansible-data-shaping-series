@@ -1,0 +1,75 @@
+---
+# Runs on the PostgreSQL server and builds its pg_hba rules from the
+# addresses of the app hosts, read from their facts. Writes the rules with
+# the postgresql role's template to out/pg_hba.conf, and what happened to
+# out/pg_hba.txt.
+- name: Build pg_hba rules from the app hosts' facts
+  hosts: db
+  gather_facts: false
+  vars_files:
+    - vars/pg_hba.yml
+  vars:
+    # The hostvars of every app host, one dict per host
+    app_hostvars: "{{ groups['app'] | map('extract', hostvars) | list }}"
+    app_with_address: "{{ app_hostvars | selectattr('ansible_facts.default_ipv4.address', 'defined') }}"
+    app_without_address: "{{ app_hostvars | rejectattr('ansible_facts.default_ipv4.address', 'defined')
+      | map(attribute='inventory_hostname') | list }}"
+    app_addresses: "{{ app_with_address | map(attribute='ansible_facts.default_ipv4.address') | list }}"
+    pg_hba_app: "{{ [pg_hba_base]
+      | product(pg_databases | map('community.general.dict_kv', 'database'),
+                app_addresses | map('regex_replace', '$', '/32') | map('community.general.dict_kv', 'address'))
+      | map('combine') | list }}"
+    rule_fields: [type, database, user, address, auth_method]
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Read every app host's address with extract and a nested path
+      block:
+        - name: Extract ansible_facts.default_ipv4.address from each app host
+          ansible.builtin.set_fact:
+            extract_addresses: "{{ groups['app'] | map('extract', hostvars, address_path) | list }}"
+          vars:
+            address_path: [ansible_facts, default_ipv4, address]
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            extract_addresses: "{{ ansible_failed_result.msg | regex_replace('^.*: ', 'error: ') }}"
+
+    - name: Check that every app host has an address
+      block:
+        - name: Assert that no app host is missing
+          ansible.builtin.assert:
+            that: app_without_address | length == 0
+            fail_msg: "no address in the facts of: {{ app_without_address | join(', ') }}"
+            quiet: true
+          register: address_check
+      rescue:
+        - name: Keep the assert's message
+          ansible.builtin.set_fact:
+            address_check: "{{ ansible_failed_result }}"
+
+    - name: Write the pg_hba.conf the role would write
+      ansible.builtin.template:
+        src: ../roles/linux-system-roles.postgresql/templates/pg_hba.conf.j2
+        dest: out/pg_hba.conf
+        mode: "0644"
+      vars:
+        postgresql_pg_hba_conf: "{{ pg_hba_local + pg_hba_app }}"
+
+    - name: Write out/pg_hba.txt
+      ansible.builtin.copy:
+        dest: out/pg_hba.txt
+        mode: "0644"
+        content: |
+          groups['app']: {{ groups['app'] }}
+          extract with a nested path: {{ extract_addresses }}
+          app hosts with an address: {{ app_with_address | map(attribute='inventory_hostname') | list }}
+          assert: {{ address_check.msg | default('every app host has an address') }}
+          rules:
+          {% for rule in pg_hba_app %}
+            {{ rule_fields | map('extract', rule) | join(' ') }}
+          {% endfor %}

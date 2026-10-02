@@ -1,0 +1,20 @@
+---
+# Three application servers and the PostgreSQL server. None of them exists:
+# every host runs on the local machine. recorded_ipv4 is only read by
+# record-facts.yml, standing in for the address facts would report.
+all:
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  children:
+    app:
+      hosts:
+        app1:
+          recorded_ipv4: 10.10.0.11
+        app2:
+          recorded_ipv4: 10.10.0.12
+        app3:    # added since the last run that gathered facts
+    db:
+      hosts:
+        db1:
+          recorded_ipv4: 10.10.0.5
