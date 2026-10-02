@@ -1,0 +1,149 @@
+---
+# Builds sudo_sudoers_files entries for the linux-system-roles.sudo role from
+# rules that don't all set every field, renders them with the role's own
+# template, validated by visudo, and writes what happened to out/render.txt.
+- name: Render sudo rules with optional fields
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/rules.yml
+  vars:
+    sudo_template: ../roles/linux-system-roles.sudo/templates/sudoers.j2
+    sudo_spec_base:
+      users: ["%postgres"]
+      hosts: [ALL]
+    status_rule: "{{ postgres_sudo_rules | selectattr('name', 'equalto', 'status') | first }}"
+    journal_rule: "{{ postgres_sudo_rules | selectattr('name', 'equalto', 'journal') | first }}"
+    # A command without its full path, which sudo refuses
+    broken_specs:
+      - "{{ sudo_spec_base | combine({'commands': ['systemctl restart postgresql.service']}) }}"
+    the_error: "object of type '[^']+' has no len\\(\\)|rule [a-z]+ has no commands"
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Try default(omit) on a key inside the rule
+      block:
+        - name: Render a rule whose operators may be omitted
+          ansible.builtin.template:
+            src: "{{ sudo_template }}"
+            dest: out/omit-inside
+            mode: "0440"
+            validate: visudo -cf %s
+          vars:
+            item:
+              user_specifications:
+                - "{{ sudo_spec_base | combine({'commands': status_rule.commands,
+                    'operators': status_rule.runas | default(omit)}) }}"
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            omit_inside_error: "{{ ansible_failed_result.msg | regex_search(the_error) }}"
+
+    - name: Try a null operators
+      block:
+        - name: Render a rule whose runas is null
+          ansible.builtin.template:
+            src: "{{ sudo_template }}"
+            dest: out/null-operators
+            mode: "0440"
+            validate: visudo -cf %s
+          vars:
+            item:
+              user_specifications:
+                - "{{ sudo_spec_base | combine({'commands': journal_rule.commands,
+                    'operators': journal_rule.runas}) }}"
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            null_error: "{{ ansible_failed_result.msg | regex_search(the_error) }}"
+
+    - name: Render the forgotten rule as it is
+      ansible.builtin.template:
+        src: "{{ sudo_template }}"
+        dest: out/forgotten
+        mode: "0440"
+        validate: visudo -cf %s
+      vars:
+        item:
+          user_specifications:
+            - "{{ sudo_spec_base | combine(postgres_sudo_rule_forgotten) }}"
+
+    - name: Try mandatory on the forgotten rule's commands
+      block:
+        - name: Require commands
+          ansible.builtin.debug:
+            msg: "{{ postgres_sudo_rule_forgotten.commands
+              | mandatory('rule ' ~ postgres_sudo_rule_forgotten.name ~ ' has no commands') }}"
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            mandatory_error: "{{ ansible_failed_result.msg | regex_search(the_error) }}"
+
+    - name: Build each rule's user specification, with empty lists for what isn't set
+      ansible.builtin.set_fact:
+        sudo_specs: "{{ sudo_specs | default([]) + [{
+          'users': [item.group | default('%postgres', true)],
+          'hosts': ['ALL'],
+          'operators': [item.runas] if item.runas | default(none) else [],
+          'tags': item.nopasswd | default(none) | ternary(['NOPASSWD'], [], ['PASSWD']),
+          'commands': item.commands | mandatory('rule ' ~ item.name ~ ' has no commands')}] }}"
+      loop: "{{ postgres_sudo_rules }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Render the rules
+      ansible.builtin.template:
+        src: "{{ sudo_template }}"
+        dest: out/40-postgresql
+        mode: "0440"
+        validate: visudo -cf %s
+      vars:
+        item:
+          user_specifications: "{{ sudo_specs }}"
+
+    # default(omit) on a module argument: the argument is left out, as if
+    # the task never had it. Here, a broken rule with and without validation.
+    - name: Render a broken rule, validated or not
+      block:
+        - name: Render a rule with a relative command path
+          ansible.builtin.template:
+            src: "{{ sudo_template }}"
+            dest: "out/broken-{{ item.label }}"
+            mode: "0440"
+            validate: "{{ item.validate | default(omit) }}"
+          loop:
+            - label: unvalidated
+              user_specifications: "{{ broken_specs }}"
+            - label: validated
+              validate: visudo -cf %s
+              user_specifications: "{{ broken_specs }}"
+          loop_control:
+            label: "{{ item.label }}"
+      rescue:
+        - name: Keep which one failed
+          ansible.builtin.set_fact:
+            broken_results: "{{ ansible_failed_result.results | map(attribute='failed', default=false) | list }}"
+
+    - name: Write out/render.txt
+      ansible.builtin.copy:
+        dest: out/render.txt
+        mode: "0644"
+        content: |
+          default(omit) inside the rule: {{ omit_inside_error }}
+          runas null: {{ null_error }}
+          forgotten commands, rules written: {{ lookup('file', 'out/forgotten').splitlines()
+            | reject('match', '#') | select | length }}
+          mandatory on the forgotten commands: {{ mandatory_error }}
+          '' | default('%postgres'): {{ '' | default('%postgres') | to_json }}
+          '' | default('%postgres', true): {{ '' | default('%postgres', true) | to_json }}
+          null | default('%postgres'): {{ none | default('%postgres') | to_json }}
+          null | default('%postgres', true): {{ none | default('%postgres', true) | to_json }}
+          [] | mandatory: {{ [] | mandatory('empty') | to_json }}
+          broken rule, unvalidated then validated, failed: {{ broken_results }}
+          ternary on true, false, null: {{ [true, false, none] | map('ternary', ['NOPASSWD'], [], ['PASSWD']) | list }}
+          ternary without the third value: {{ [true, false, none] | map('ternary', ['NOPASSWD'], []) | list }}

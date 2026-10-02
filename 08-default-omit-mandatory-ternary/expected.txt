@@ -1,0 +1,18 @@
+default(omit) inside the rule: object of type '_OmitType' has no len()
+runas null: object of type 'NoneType' has no len()
+forgotten commands, rules written: 0
+mandatory on the forgotten commands: rule stop has no commands
+'' | default('%postgres'): ""
+'' | default('%postgres', true): "%postgres"
+null | default('%postgres'): null
+null | default('%postgres', true): "%postgres"
+[] | mandatory: []
+broken rule, unvalidated then validated, failed: [False, True]
+ternary on true, false, null: [['NOPASSWD'], [], ['PASSWD']]
+ternary without the third value: [['NOPASSWD'], [], []]
+out/40-postgresql, mode 440:
+  %postgres ALL=(root) NOPASSWD: /usr/bin/systemctl restart postgresql.service
+  %postgres ALL= /usr/bin/systemctl status postgresql.service
+  %postgres ALL= PASSWD: /usr/bin/journalctl -u postgresql.service
+  %postgres ALL= PASSWD: /usr/bin/systemctl reload postgresql.service
+broken rule files written: broken-unvalidated
