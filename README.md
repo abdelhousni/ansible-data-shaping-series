@@ -16,6 +16,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`07-strings-into-structures/`](07-strings-into-structures/) | [Part 7: Strings into structures](https://til.housni.eu/ansible/strings-into-structures-df-findmnt-from-json.html) |
 | [`08-default-omit-mandatory-ternary/`](08-default-omit-mandatory-ternary/) | [Part 8: default, omit, mandatory and ternary](https://til.housni.eu/ansible/default-omit-mandatory-ternary-sudo-rules.html) |
 | [`09-forcing-types/`](09-forcing-types/) | [Part 9: Forcing types and stricter conditionals](https://til.housni.eu/ansible/forcing-types-extra-vars-conditionals.html) |
+| [`10-writing-data-out/`](10-writing-data-out/) | [Part 10: Writing data out with to_nice_json and to_nice_yaml](https://til.housni.eu/ansible/writing-data-out-to-nice-json-caddy.html) |
 
 Related entry, outside the series:
 
