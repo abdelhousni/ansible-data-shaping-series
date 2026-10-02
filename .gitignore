@@ -3,3 +3,4 @@
 /roles/
 out/
 __pycache__/
+.ansible/
