@@ -1,0 +1,58 @@
+---
+# Two switches for a PostgreSQL maintenance play, meant to be overridden with
+# -e on the command line. Writes, for one run, what each conditional and
+# conversion did to out/<run_label>.txt. run.sh runs it with each kind of -e.
+- name: Read switches from extra vars
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    restart: true
+    max_connections: 100
+    run_label: defaults
+    conditional_error: "Conditional result \\([A-Za-z]+\\) was derived from value of type '[a-z]+'"
+    compare_error: "'>' not supported between instances of '[A-Za-z_]+' and '[a-z]+'"
+  tasks:
+    - name: Try when with the switch as it is
+      block:
+        - name: Restart PostgreSQL, if restart
+          ansible.builtin.set_fact:
+            plain_when: ran
+          when: restart
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            plain_when: "error: {{ ansible_failed_result.msg | regex_search(conditional_error) }}"
+
+    - name: Restart PostgreSQL, if restart | bool
+      ansible.builtin.set_fact:
+        bool_when: ran
+      when: restart | bool
+
+    - name: Try a comparison with the number as it is
+      block:
+        - name: Compare max_connections with 150
+          ansible.builtin.set_fact:
+            plain_compare: "{{ max_connections > 150 }}"
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            plain_compare: "error: {{ ansible_failed_result.msg | regex_search(compare_error) }}"
+
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Write what this run did
+      ansible.builtin.copy:
+        dest: "out/{{ run_label }}.txt"
+        mode: "0644"
+        content: |
+          restart: {{ restart | to_json }} ({{ restart | type_debug }})
+          max_connections: {{ max_connections | to_json }} ({{ max_connections | type_debug }})
+          when: restart: {{ plain_when | default('skipped') }}
+          when: restart | bool: {{ bool_when | default('skipped') }}
+          max_connections > 150: {{ plain_compare }}
+          max_connections | int > 150: {{ max_connections | int > 150 }}

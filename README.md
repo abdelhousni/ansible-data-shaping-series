@@ -15,6 +15,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`06-set-operations/`](06-set-operations/) | [Part 6: Set operations on lists](https://til.housni.eu/ansible/set-operations-union-difference-proxmox-drift.html) |
 | [`07-strings-into-structures/`](07-strings-into-structures/) | [Part 7: Strings into structures](https://til.housni.eu/ansible/strings-into-structures-df-findmnt-from-json.html) |
 | [`08-default-omit-mandatory-ternary/`](08-default-omit-mandatory-ternary/) | [Part 8: default, omit, mandatory and ternary](https://til.housni.eu/ansible/default-omit-mandatory-ternary-sudo-rules.html) |
+| [`09-forcing-types/`](09-forcing-types/) | [Part 9: Forcing types and stricter conditionals](https://til.housni.eu/ansible/forcing-types-extra-vars-conditionals.html) |
 
 Related entry, outside the series:
 

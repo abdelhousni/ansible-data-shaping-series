@@ -1,0 +1,32 @@
+---
+# What int, float, string and bool make of values that arrive as strings,
+# written to out/convert.txt.
+- name: Convert strings
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    int_cases: ["200", " 200 ", "4GB", "2.5", "0x1F"]
+    bool_cases: ["yes", "On", "1", "true", "no", "OFF", "0", "false"]
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Write out/convert.txt
+      ansible.builtin.copy:
+        dest: out/convert.txt
+        mode: "0644"
+        content: |
+          {% for value in int_cases %}
+          {{ value | to_json }} | int: {{ value | int }}
+          {% endfor %}
+          "4GB" | int(-1): {{ '4GB' | int(-1) }}
+          "0x1F" | int(0, 16): {{ '0x1F' | int(0, 16) }}
+          "2.5" | float: {{ '2.5' | float }}
+          200 | string: {{ 200 | string | to_json }}
+          {% for value in bool_cases %}
+          {{ value | to_json }} | bool: {{ value | bool }}
+          {% endfor %}
