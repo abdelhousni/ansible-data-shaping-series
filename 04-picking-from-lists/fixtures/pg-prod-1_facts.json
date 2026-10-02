@@ -1,0 +1,83 @@
+{
+  "mounts": [
+    {
+      "mount": "/srv/backups",
+      "device": "/dev/loop1",
+      "fstype": "ext4",
+      "size_total": 108974080,
+      "size_available": 68100096
+    },
+    {
+      "mount": "/etc/resolv.conf",
+      "device": "/dev/vda",
+      "fstype": "ext4",
+      "size_total": 270553174016,
+      "size_available": 345104384
+    },
+    {
+      "mount": "/etc/hostname",
+      "device": "/dev/vda",
+      "fstype": "ext4",
+      "size_total": 270553174016,
+      "size_available": 345104384
+    },
+    {
+      "mount": "/etc/hosts",
+      "device": "/dev/vda",
+      "fstype": "ext4",
+      "size_total": 270553174016,
+      "size_available": 345104384
+    },
+    {
+      "mount": "/var/lib/pgsql",
+      "device": "/dev/loop0",
+      "fstype": "ext4",
+      "size_total": 58675200,
+      "size_available": 3624960
+    }
+  ],
+  "interfaces": [
+    "eth0",
+    "eth1",
+    "lo"
+  ],
+  "eth0": {
+    "device": "eth0",
+    "active": true,
+    "type": "ether",
+    "mtu": 1500,
+    "ipv4": {
+      "address": "172.17.0.2",
+      "netmask": "255.255.0.0",
+      "network": "172.17.0.0",
+      "prefix": "16"
+    }
+  },
+  "eth1": {
+    "device": "eth1",
+    "active": false,
+    "type": "ether",
+    "mtu": 1500,
+    "ipv4": {
+      "address": "172.18.0.2",
+      "netmask": "255.255.0.0",
+      "network": "172.18.0.0",
+      "prefix": "16"
+    }
+  },
+  "lo": {
+    "device": "lo",
+    "active": true,
+    "type": "loopback",
+    "mtu": 65536,
+    "ipv4": {
+      "address": "127.0.0.1",
+      "netmask": "255.0.0.0",
+      "network": "127.0.0.0",
+      "prefix": "8"
+    }
+  },
+  "hostname": "pg-prod-1",
+  "distribution": "Rocky",
+  "distribution_version": "9.8"
+}
