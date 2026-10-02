@@ -1,0 +1,60 @@
+---
+# Writes the same configuration with each filter and option the entry
+# compares, into out/variants/. run.sh checks which ones are JSON.
+- name: Write the configuration every way
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars/caddy.yml]
+  vars:
+    caddy_config:
+      apps:
+        http:
+          servers:
+            app: "{{ caddy_server_base | combine(caddy_server_site) }}"
+  tasks:
+    - name: Make out/variants/
+      ansible.builtin.file:
+        path: out/variants
+        state: directory
+        mode: "0755"
+
+    - name: Write each filter's output
+      ansible.builtin.copy:
+        dest: out/variants/{{ item.name }}
+        mode: "0644"
+        content: "{{ item.text }}\n"
+      loop:
+        - {name: to_json, text: "{{ caddy_config | to_json }}"}
+        - {name: to_nice_json, text: "{{ caddy_config | to_nice_json }}"}
+        - {name: to_nice_json-ensure_ascii-false, text: "{{ caddy_config | to_nice_json(ensure_ascii=false) }}"}
+        - {name: tojson, text: "{{ caddy_config | tojson }}"}
+        - {name: to_nice_yaml, text: "{{ caddy_config | to_nice_yaml }}"}
+        - {name: to_nice_yaml-width-1000, text: "{{ caddy_config | to_nice_yaml(width=1000) }}"}
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Write the dict without a filter, with template
+      ansible.builtin.template:
+        src: caddy-raw.json.j2
+        dest: out/variants/no-filter-template
+        mode: "0644"
+
+    - name: Write the dict without a filter, with copy
+      ansible.builtin.copy:
+        content: "{{ caddy_config }}"
+        dest: out/variants/no-filter-copy
+        mode: "0644"
+
+    - name: Read the YAML back
+      vars:
+        yaml_files:
+          - [to_nice_yaml, to_nice_yaml]
+          - [to_nice_yaml(width=1000), to_nice_yaml-width-1000]
+      ansible.builtin.copy:
+        dest: out/variants/yaml-round-trip.txt
+        mode: "0644"
+        content: |
+          {% for name, file in yaml_files %}
+          {{ name }} read back equals the data: {{ lookup('file', 'out/variants/' ~ file) | from_yaml == caddy_config }}
+          {% endfor %}

@@ -1,0 +1,28 @@
+first run: changed, 87 diff lines
+second run, nothing changed: ok, 0 diff lines
+layers merged the other way, sort_keys=true: ok, 0 diff lines
+back to the first order, sort_keys=false: changed, 36 diff lines
+layers merged the other way, sort_keys=false: changed, 6 diff lines
+back to sort_keys=true: changed, 42 diff lines
+indent=2: changed, 156 diff lines
+variants:
+  no-filter-copy: valid JSON, 1 lines
+  no-filter-template: not JSON, 1 lines
+  to_json: valid JSON, 1 lines
+  to_nice_json: valid JSON, 87 lines
+  to_nice_json-ensure_ascii-false: valid JSON, 87 lines
+  to_nice_yaml: not JSON, 42 lines
+  to_nice_yaml-width-1000: not JSON, 40 lines
+  tojson: valid JSON, 1 lines
+  first line of no-filter-template: {'apps': {'http': {'servers': {'app': {'
+  Café in to_nice_json: "Caf\u00e9 server"
+  Café with ensure_ascii=false: "Café server"
+  'self' in tojson: "default-src \u0027self\u0027;
+  Content-Security-Policy value in to_nice_yaml:
+    - default-src 'self'; script-src 'self'; style-src
+    'self' 'unsafe-inline'; img-src 'self' data:;
+    frame-ancestors 'none'
+  Content-Security-Policy value in to_nice_yaml(width=1000):
+    - default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'
+  to_nice_yaml read back equals the data: True
+  to_nice_yaml(width=1000) read back equals the data: True

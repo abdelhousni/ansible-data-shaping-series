@@ -1,0 +1,32 @@
+---
+# Writes out/caddy.json from the two layers in vars/caddy.yml, the way a
+# deployment would. run.sh runs it with different settings and reports
+# whether Ansible saw a change.
+- name: Write the Caddy configuration
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars/caddy.yml]
+  vars:
+    layer_order: base-first
+    json_indent: 4
+    json_sort_keys: true
+    caddy_server: "{{ caddy_server_base | combine(caddy_server_site) if layer_order == 'base-first'
+      else caddy_server_site | combine(caddy_server_base) }}"
+    caddy_config:
+      apps:
+        http:
+          servers:
+            app: "{{ caddy_server }}"
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Write out/caddy.json
+      ansible.builtin.template:
+        src: caddy.json.j2
+        dest: out/caddy.json
+        mode: "0644"

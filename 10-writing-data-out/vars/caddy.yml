@@ -1,0 +1,34 @@
+---
+# Part 3's Caddy site (example.com, PHP-FPM in the php container, files from
+# /srv) as Caddy's native JSON configuration, in two layers that write.yml
+# merges with combine: what every server has, and what this site adds.
+caddy_csp: >-
+  default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
+  img-src 'self' data:; frame-ancestors 'none'
+
+caddy_server_base:
+  listen: [":443"]
+
+caddy_server_site:
+  logs:
+    default_logger_name: app
+  routes:
+    - match: [{host: [example.com]}]
+      handle:
+        - handler: headers
+          response:
+            set:
+              Content-Security-Policy: ["{{ caddy_csp }}"]
+              X-Served-By: [Café server]
+        - handler: encode
+          encodings: {gzip: {}}
+        - handler: subroute
+          routes:
+            - match: [{path: ["*.php"]}]
+              handle:
+                - handler: reverse_proxy
+                  transport: {protocol: fastcgi, split_path: [.php], root: /srv}
+                  upstreams: [{dial: "php:9000"}]
+            - handle:
+                - handler: file_server
+                  root: /srv
