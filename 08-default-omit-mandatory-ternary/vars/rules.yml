@@ -1,0 +1,23 @@
+---
+# Sudo rules for the PostgreSQL service, one per command, as they might
+# come from a form or a spreadsheet: not every rule sets every field.
+postgres_sudo_rules:
+  - name: restart
+    commands: [/usr/bin/systemctl restart postgresql.service]
+    nopasswd: true
+    runas: root
+  - name: status
+    commands: [/usr/bin/systemctl status postgresql.service]
+    nopasswd: false
+  - name: journal
+    commands: [/usr/bin/journalctl -u postgresql.service]
+    runas:              # left empty: YAML reads null
+  - name: reload
+    commands: [/usr/bin/systemctl reload postgresql.service]
+    group: ""           # left blank
+    nopasswd:           # null: not decided
+
+# A rule whose commands were forgotten
+postgres_sudo_rule_forgotten:
+  name: stop
+  nopasswd: true

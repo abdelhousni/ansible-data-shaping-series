@@ -40,6 +40,7 @@ jobs:
           - 05-subelements-and-product
           - 06-set-operations
           - 07-strings-into-structures
+          - 08-default-omit-mandatory-ternary
           - sudo-shell-escapes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
