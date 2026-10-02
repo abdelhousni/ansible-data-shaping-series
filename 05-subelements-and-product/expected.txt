@@ -1,0 +1,34 @@
+subelements('Container.Volume'): could not find 'Volume' key in iterated item
+subelements('Container.Volume', skip_missing=True): the key 'Volume' should point to a list
+with php's Volume as a list:
+  caddy: /srv/Caddyfile:/etc/caddy/Caddyfile:ro
+  caddy: /srv/app:/srv:ro
+  php: /srv/app:/srv:ro
+bind sources, unique: ['/srv/Caddyfile', '/srv/app']
+directories to create: ['/srv/app']
+the podman role's host directories:
+  adminer: 1.14.3 [], main []
+  caddy: 1.14.3 ['/srv/Caddyfile:/etc/caddy/Caddyfile:ro', '/srv/app:/srv:ro'], main ['/srv/Caddyfile', '/srv/app']
+  php: 1.14.3 [], main ['/srv/app']
+directories created under out/: srv srv/app
+product: 2 databases × 2 subnets = 4 rules
+  hostssl app all 10.10.0.0/24 scram-sha-256
+  hostssl app all 10.20.0.0/24 scram-sha-256
+  hostssl reporting all 10.10.0.0/24 scram-sha-256
+  hostssl reporting all 10.20.0.0/24 scram-sha-256
+subelements: 3 rules, from 3 databases
+  hostssl app all 10.10.0.0/24 scram-sha-256
+  hostssl app all 10.20.0.0/24 scram-sha-256
+  hostssl reporting all 10.30.0.0/24 scram-sha-256
+product with no subnet: 0 rules, assert: no network rule: pg_client_subnets is empty
+pg_hba.conf, product:
+  local all all  peer
+  hostssl app all 10.10.0.0/24 scram-sha-256
+  hostssl app all 10.20.0.0/24 scram-sha-256
+  hostssl reporting all 10.10.0.0/24 scram-sha-256
+  hostssl reporting all 10.20.0.0/24 scram-sha-256
+pg_hba.conf, subelements:
+  local all all  peer
+  hostssl app all 10.10.0.0/24 scram-sha-256
+  hostssl app all 10.20.0.0/24 scram-sha-256
+  hostssl reporting all 10.30.0.0/24 scram-sha-256
