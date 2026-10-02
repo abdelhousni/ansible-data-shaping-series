@@ -13,6 +13,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`04-picking-from-lists/`](04-picking-from-lists/) | [Part 4: Picking from a list of dicts with selectattr, rejectattr and map](https://til.housni.eu/ansible/selectattr-rejectattr-map-proxmox-guests-and-facts.html) |
 | [`05-subelements-and-product/`](05-subelements-and-product/) | [Part 5: subelements versus product](https://til.housni.eu/ansible/subelements-versus-product-quadlet-volumes-pg-hba.html) |
 | [`06-set-operations/`](06-set-operations/) | [Part 6: Set operations on lists](https://til.housni.eu/ansible/set-operations-union-difference-proxmox-drift.html) |
+| [`07-strings-into-structures/`](07-strings-into-structures/) | [Part 7: Strings into structures](https://til.housni.eu/ansible/strings-into-structures-df-findmnt-from-json.html) |
 
 Related entry, outside the series:
 

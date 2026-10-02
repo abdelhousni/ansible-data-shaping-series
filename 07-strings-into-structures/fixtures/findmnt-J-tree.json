@@ -1,0 +1,14 @@
+{
+   "filesystems": [
+      {
+         "target": "/",
+         "size": 270553174016,
+         "children": [
+            {
+               "target": "/srv/app data",
+               "size": 27234304
+            }
+         ]
+      }
+   ]
+}

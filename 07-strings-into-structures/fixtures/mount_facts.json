@@ -1,0 +1,18 @@
+{
+  "mounts": [
+    {
+      "mount": "/",
+      "device": "/dev/vda",
+      "fstype": "ext4",
+      "size_total": 270553174016,
+      "size_available": 28400402432
+    },
+    {
+      "mount": "/srv/app data",
+      "device": "/dev/loop0",
+      "fstype": "ext4",
+      "size_total": 27234304,
+      "size_available": 24866816
+    }
+  ]
+}

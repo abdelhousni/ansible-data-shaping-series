@@ -1,0 +1,20 @@
+df, the line: /dev/loop0                  27234304       24576    24866816       1% /srv/app data
+df, split | last: data
+df, split, field 6: /srv/app
+df, split(none, 5), field 6: /srv/app data
+df, regex_findall, lines matched: 2 of 3
+df, regex_findall, row: ['/dev/loop0', '27234304', '24576', '24866816', '1', '/srv/app data']
+df, available, type: str
+df, available > 3 MB, as strings: False
+df, available > 3 MB, through int: True
+findmnt, from_json, type: dict
+findmnt, row: {'target': '/srv/app data', 'source': '/dev/loop0', 'fstype': 'ext4', 'size': 27234304, 'used': 24576, 'avail': 24866816, 'use%': '0%'}
+findmnt, avail, type: int
+findmnt, use%: 0%
+findmnt, from_yaml reads the same JSON: True
+findmnt without -l, top level: ['/']
+facts: /srv/app data, /dev/loop0, ext4, 27234304, 24866816
+same size, df / findmnt / facts: 27234304 / 27234304 / 27234304
+full, df Capacity: 1% here, 31% on /
+full, findmnt use%: 0% here, 5% on /
+neither used nor available, MB: 2.3
