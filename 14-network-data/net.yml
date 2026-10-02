@@ -11,9 +11,10 @@
   vars:
     vms: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"
     inputs: "{{ pg_client_subnets_input }}"
-    # Each input next to what ipaddr('net') makes of it; '' and False mean no
-    checked: "{{ inputs | zip(inputs | map('ansible.utils.ipaddr', 'net')) }}"
-    rejected: "{{ checked | rejectattr('1') | map('first') | list }}"
+    # A network is written right when ipaddr('subnet') gives it back as is
+    rejected: "{{ inputs | reject('in', inputs | map('ansible.utils.ipaddr', 'subnet')) | list }}"
+    rejected_by_net: "{{ inputs | zip(inputs | map('ansible.utils.ipaddr', 'net')) | rejectattr('1')
+      | map('first') | list }}"
   tasks:
     - name: Make out/
       ansible.builtin.file:
@@ -46,7 +47,8 @@
             is ansible.utils.ip: {{ value is ansible.utils.ip }}
           {% endfor %}
           the whole list through ipaddr('net'): {{ inputs | ansible.utils.ipaddr('net') }}
-          rejected: {{ rejected }}
+          rejected by ipaddr('net'): {{ rejected_by_net }}
+          rejected, not equal to their own ipaddr('subnet'): {{ rejected }}
           assert: {{ subnet_check | default('every client subnet is a network') }}
           {{ guest_range }} in /24s: {{ guest_range | ansible.utils.ipsubnet(24) }}, the first two:
             {{ guest_range | ansible.utils.ipsubnet(24, 0) }} and {{ guest_range | ansible.utils.ipsubnet(24, 1) }}

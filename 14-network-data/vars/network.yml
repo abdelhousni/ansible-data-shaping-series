@@ -3,6 +3,7 @@
 # and the usual mistakes.
 pg_client_subnets_input:
   - 10.10.0.0/24
+  - 10.10.0.11/32    # one host, as part 11's rules
   - 10.20.0.5/24     # a host address with a prefix: host or subnet?
   - 10.40.0.0        # no prefix
   - 10.30.0.0/33     # no such prefix in IPv4

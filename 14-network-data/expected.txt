@@ -3,6 +3,11 @@
   ipaddr('net'): "10.10.0.0/24"
   ipaddr('subnet'): "10.10.0.0/24"
   is ansible.utils.ip: True
+"10.10.0.11/32":
+  ipaddr: "10.10.0.11/32"
+  ipaddr('net'): null
+  ipaddr('subnet'): "10.10.0.11/32"
+  is ansible.utils.ip: True
 "10.20.0.5/24":
   ipaddr: "10.20.0.5/24"
   ipaddr('net'): null
@@ -29,7 +34,8 @@
   ipaddr('subnet'): "2001:db8::/64"
   is ansible.utils.ip: True
 the whole list through ipaddr('net'): ['10.10.0.0/24', '2001:db8::/64']
-rejected: ['10.20.0.5/24', '10.40.0.0', '10.30.0.0/33', 'db.example']
+rejected by ipaddr('net'): ['10.10.0.11/32', '10.20.0.5/24', '10.40.0.0', '10.30.0.0/33', 'db.example']
+rejected, not equal to their own ipaddr('subnet'): ['10.20.0.5/24', '10.40.0.0', '10.30.0.0/33', 'db.example']
 assert: not a network with a prefix: 10.20.0.5/24, 10.40.0.0, 10.30.0.0/33, db.example
 10.10.0.0/16 in /24s: 256, the first two:
   10.10.0.0/24 and 10.10.1.0/24
