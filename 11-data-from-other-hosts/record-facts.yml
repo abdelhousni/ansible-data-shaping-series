@@ -1,0 +1,15 @@
+---
+# Stands for an earlier run that gathered facts on app1, app2 and db1, but
+# not on app3, which didn't exist yet. The hosts aren't real, so their
+# address comes from the inventory; cacheable puts it in the fact cache,
+# where gathered facts go.
+- name: Record the facts of an earlier run
+  hosts: app1,app2,db1
+  gather_facts: false
+  tasks:
+    - name: Store default_ipv4 in the fact cache
+      ansible.builtin.set_fact:
+        default_ipv4:
+          address: "{{ recorded_ipv4 }}"
+          interface: eth0
+        cacheable: true

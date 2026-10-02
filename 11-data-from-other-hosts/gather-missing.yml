@@ -1,0 +1,31 @@
+---
+# From the PostgreSQL server, gathers the facts of the app hosts that have
+# none, with delegate_to and delegate_facts, and records what changed.
+- name: Gather the missing facts from the PostgreSQL server
+  hosts: db
+  gather_facts: false
+  vars:
+    app_without_facts: "{{ groups['app'] | map('extract', hostvars) | rejectattr('ansible_facts.system', 'defined')
+      | map(attribute='inventory_hostname') | list }}"
+  tasks:
+    - name: Record which app hosts have no facts
+      ansible.builtin.set_fact:
+        before: "{{ app_without_facts }}"
+
+    - name: Gather the minimal facts of each of them, stored as theirs
+      ansible.builtin.setup:
+        gather_subset: ["!all"]
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ app_without_facts }}"
+
+    - name: Write out/gather-missing.txt
+      ansible.builtin.copy:
+        dest: out/gather-missing.txt
+        mode: "0644"
+        content: |
+          app hosts without facts, before: {{ before }}
+          app hosts without facts, after: {{ app_without_facts }}
+          app3's system, from ansible_facts: {{ hostvars['app3'].ansible_facts.system }}
+          app3's system, from the top-level variable: {{ hostvars['app3'].ansible_system }}
+          db1's own facts: {{ 'gathered' if ansible_facts.system is defined else 'none' }}
