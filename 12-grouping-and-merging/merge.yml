@@ -1,0 +1,57 @@
+---
+# Joins what the team declares about each guest (vars/declared.yml) to the
+# guests Proxmox reports, by VMID, with community.general.lists_mergeby,
+# and writes the results and the errors to out/merge.txt.
+- name: Merge declared data into the Proxmox guests
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/declared.yml
+  vars:
+    guests: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"
+    # A later list wins, as with combine
+    backup_overrides:
+      - vmid: 100
+        backup:
+          keep: [weekly-4]
+    merged: "{{ guests | community.general.lists_mergeby(declared_guests, 'vmid') }}"
+    fields: [vmid, name, status, owner]
+    with_overrides: "{{ [guests, declared_guests, backup_overrides] | community.general.lists_mergeby('vmid') }}"
+    with_recursive: "{{ [guests, declared_guests, backup_overrides]
+      | community.general.lists_mergeby('vmid', recursive=true) }}"
+    with_append: "{{ [guests, declared_guests, backup_overrides]
+      | community.general.lists_mergeby('vmid', recursive=true, list_merge='append') }}"
+    string_list: "{{ declared_guests + [{'vmid': '105', 'owner': 'ops'}] }}"
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Merge with one VMID typed as a string
+      block:
+        - name: Add a declared guest whose VMID is "105"
+          ansible.builtin.set_fact:
+            string_vmid: "{{ guests | community.general.lists_mergeby(string_list, 'vmid') | length }}"
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            string_vmid: "{{ ansible_failed_result.msg | regex_replace('^.*failed: ', 'error: ') }}"
+
+    - name: Write out/merge.txt
+      ansible.builtin.copy:
+        dest: out/merge.txt
+        mode: "0644"
+        content: |
+          declared guests: {{ declared_guests | length }}, merged guests: {{ merged | length }}
+          {% for guest in merged %}
+            {{ fields | map('extract', guest) | map('default', '-') | join(' | ') }}
+          {% endfor %}
+          pg1 (no vmid) in the result: {{ merged | selectattr('name', 'equalto', 'pg1') | list | length > 0 }}
+          VMIDs in order: {{ merged | map(attribute='vmid') | list }}
+          guest 100's backup, overrides merged: {{ (with_overrides | first).backup }}
+          with recursive=true: {{ (with_recursive | first).backup }}
+          with recursive=true, list_merge='append': {{ (with_append | first).backup }}
+          one VMID as a string: {{ string_vmid }}

@@ -1,0 +1,27 @@
+group.yml:
+  groupby('node') returns: ['pve', 'pve2'], each a GroupTuple
+  first pair: ("pve", 2 guests)
+  VMIDs by node: {'pve': [100, 102], 'pve2': [101, 103, 104, 105]}
+  VMIDs by status: {'running': [100, 102], 'stopped': [101, 103, 104, 105]}
+  groupby('pool', default='(none)'): error: object of type 'dict' has no attribute 'pool'
+  VMIDs by pool, with the default combined first: {'(none)': [100, 102], 'pool1': [101, 103, 104, 105]}
+  groupby('status') on running/Running/stopped: ['running', 'stopped'],
+    sizes [2, 1]
+  with case_sensitive=true: ['Running', 'running', 'stopped']
+  groupby_as_dict('vmid') keys: [100, 101, 102, 103, 104, 105]
+  groupby_as_dict('vmid')[104].name: test-lxc.home.arpa
+  groupby_as_dict('name'): error: Multiple sequence entries have attribute value 'test-lxc.home.arpa'
+merge.yml:
+  declared guests: 4, merged guests: 6
+    100 | pxe.home.arpa | running | infra
+    101 | test1 | stopped | dev
+    102 | test-lxc.home.arpa | running | -
+    103 | test1-lxc.home.arpa | stopped | dev
+    104 | test-lxc.home.arpa | stopped | -
+    105 |  | stopped | -
+  pg1 (no vmid) in the result: False
+  VMIDs in order: [100, 101, 102, 103, 104, 105]
+  guest 100's backup, overrides merged: {'keep': ['weekly-4']}
+  with recursive=true: {'schedule': 'daily', 'keep': ['weekly-4']}
+  with recursive=true, list_merge='append': {'schedule': 'daily', 'keep': ['daily-7', 'weekly-4']}
+  one VMID as a string: error: '<' not supported between instances of 'str' and 'int'

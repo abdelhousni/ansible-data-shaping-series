@@ -1,0 +1,18 @@
+---
+# What the team declares about each guest: who owns it and how it's backed
+# up. Proxmox knows none of this; lists_mergeby joins it to the guests
+# proxmox_vm_info reports, by VMID.
+declared_guests:
+  - vmid: 100
+    owner: infra
+    backup:
+      schedule: daily
+      keep: [daily-7]
+  - vmid: 101
+    owner: dev
+    backup:
+      schedule: weekly
+  - vmid: 103
+    owner: dev
+  - name: pg1       # VMID not known yet
+    owner: data

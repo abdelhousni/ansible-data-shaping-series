@@ -1,0 +1,66 @@
+---
+# Groups part 4's recorded Proxmox guests with Jinja's groupby and with
+# community.general.groupby_as_dict, and writes what each returned, and the
+# errors, to out/group.txt.
+- name: Group the Proxmox guests
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    guests: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"
+    by_node: "{{ guests | groupby('node') }}"
+    # (grouper, list) pairs into a dict of VMID lists
+    vmids_by_node: "{{ dict(by_node | map('first')
+      | zip(by_node | map('last') | map('map', attribute='vmid') | map('list'))) }}"
+    by_status: "{{ guests | groupby('status') }}"
+    vmids_by_status: "{{ dict(by_status | map('first')
+      | zip(by_status | map('last') | map('map', attribute='vmid') | map('list'))) }}"
+    # The guests 100 and 102 have no pool: give every guest a default first
+    by_pool: "{{ [{'pool': '(none)'}] | product(guests) | map('combine') | groupby('pool') }}"
+    vmids_by_pool: "{{ dict(by_pool | map('first')
+      | zip(by_pool | map('last') | map('map', attribute='vmid') | map('list'))) }}"
+    mixed_case: [{vmid: 1, status: running}, {vmid: 2, status: Running}, {vmid: 3, status: stopped}]
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Group by pool with groupby's default
+      block:
+        - name: Use default= for the guests without a pool
+          ansible.builtin.set_fact:
+            pool_default: "{{ guests | groupby('pool', default='(none)') | map('first') | list }}"
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            pool_default: "{{ ansible_failed_result.msg | regex_replace('^.*: ', 'error: ') }}"
+
+    - name: Index the guests by name
+      block:
+        - name: Use groupby_as_dict on the names
+          ansible.builtin.set_fact:
+            by_name: "{{ guests | community.general.groupby_as_dict('name') }}"
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            by_name: "{{ ansible_failed_result.msg | regex_replace('^.*failed: ', 'error: ') }}"
+
+    - name: Write out/group.txt
+      ansible.builtin.copy:
+        dest: out/group.txt
+        mode: "0644"
+        content: |
+          groupby('node') returns: {{ by_node | map('first') | list }}, each a {{ by_node | first | type_debug }}
+          first pair: ({{ (by_node | first).grouper | to_json }}, {{ (by_node | first).list | length }} guests)
+          VMIDs by node: {{ vmids_by_node }}
+          VMIDs by status: {{ vmids_by_status }}
+          groupby('pool', default='(none)'): {{ pool_default }}
+          VMIDs by pool, with the default combined first: {{ vmids_by_pool }}
+          groupby('status') on running/Running/stopped: {{ mixed_case | groupby('status') | map('first') | list }},
+            sizes {{ mixed_case | groupby('status') | map('last') | map('length') | list }}
+          with case_sensitive=true: {{ mixed_case | groupby('status', case_sensitive=true) | map('first') | list }}
+          groupby_as_dict('vmid') keys: {{ guests | community.general.groupby_as_dict('vmid') | list }}
+          groupby_as_dict('vmid')[104].name: {{ (guests | community.general.groupby_as_dict('vmid'))[104].name }}
+          groupby_as_dict('name'): {{ by_name }}
