@@ -1,0 +1,3 @@
+Filesystem                  1-blocks        Used   Available Capacity Mounted on
+/dev/vda                270553174016 12732731392 28401344512      31% /
+/dev/loop0                  27234304       24576    24866816       1% /srv/app data

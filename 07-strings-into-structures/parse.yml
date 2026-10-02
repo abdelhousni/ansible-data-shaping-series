@@ -1,0 +1,62 @@
+---
+# Turns recorded df and findmnt output into structures with split,
+# regex_findall, from_json and from_yaml, compares them with the mount
+# facts of the same machine, and writes each result to out/parse.txt.
+- name: Parse df and findmnt output
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # What register: gives for each command: the output as one string
+    df_stdout: "{{ lookup('file', 'fixtures/df-P-B1.txt') }}"
+    df_stdout_lines: "{{ df_stdout.splitlines() }}"
+    findmnt_stdout: "{{ lookup('file', 'fixtures/findmnt-J-l.json') }}"
+    findmnt_tree_stdout: "{{ lookup('file', 'fixtures/findmnt-J-tree.json') }}"
+    mount_facts: "{{ (lookup('file', 'fixtures/mount_facts.json') | from_json).mounts }}"
+
+    the_mount: /srv/app data
+    df_line: "{{ df_stdout_lines | select('search', 'loop0') | first }}"
+    # One match per line: device, size, used, available, capacity, mount point
+    df_regex: '(?m)^(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)%\s+(.+)$'
+    df_rows: "{{ df_stdout | regex_findall(df_regex) }}"
+    df_loop_row: "{{ df_rows | selectattr('5', 'equalto', the_mount) | first }}"
+    findmnt: "{{ findmnt_stdout | from_json }}"
+    findmnt_loop: "{{ findmnt.filesystems | selectattr('target', 'equalto', the_mount) | first }}"
+    findmnt_root: "{{ findmnt.filesystems | selectattr('target', 'equalto', '/') | first }}"
+    df_root_row: "{{ df_rows | selectattr('5', 'equalto', '/') | first }}"
+    findmnt_tree: "{{ findmnt_tree_stdout | from_json }}"
+    # Space that is neither used nor available: on ext4, the reserved blocks
+    unusable: "{{ findmnt_loop.size - findmnt_loop.used - findmnt_loop.avail }}"
+    facts_loop: "{{ mount_facts | selectattr('mount', 'equalto', the_mount) | first }}"
+    sizes: "{{ [df_loop_row[1] | int, findmnt_loop.size, facts_loop.size_total] }}"
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Write out/parse.txt
+      ansible.builtin.copy:
+        dest: out/parse.txt
+        mode: "0644"
+        content: |
+          df, the line: {{ df_line }}
+          df, split | last: {{ df_line | split | last }}
+          df, split, field 6: {{ (df_line | split)[5] }}
+          df, split(none, 5), field 6: {{ (df_line | split(none, 5))[5] }}
+          df, regex_findall, lines matched: {{ df_rows | length }} of {{ df_stdout_lines | length }}
+          df, regex_findall, row: {{ df_loop_row }}
+          df, available, type: {{ df_loop_row[3] | type_debug }}
+          df, available > 3 MB, as strings: {{ df_loop_row[3] > '3000000' }}
+          df, available > 3 MB, through int: {{ df_loop_row[3] | int > 3000000 }}
+          findmnt, from_json, type: {{ findmnt | type_debug }}
+          findmnt, row: {{ findmnt_loop }}
+          findmnt, avail, type: {{ findmnt_loop.avail | type_debug }}
+          findmnt, use%: {{ findmnt_loop['use%'] }}
+          findmnt, from_yaml reads the same JSON: {{ findmnt_stdout | from_yaml == findmnt }}
+          findmnt without -l, top level: {{ findmnt_tree.filesystems | map(attribute='target') | list }}
+          facts: {{ facts_loop | dict2items | map(attribute='value') | join(', ') }}
+          same size, df / findmnt / facts: {{ sizes | join(' / ') }}
+          full, df Capacity: {{ df_loop_row[4] }}% here, {{ df_root_row[4] }}% on /
+          full, findmnt use%: {{ findmnt_loop['use%'] }} here, {{ findmnt_root['use%'] }} on /
+          neither used nor available, MB: {{ (unusable / 1000000) | round(1) }}

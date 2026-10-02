@@ -1,0 +1,22 @@
+{
+   "filesystems": [
+      {
+         "target": "/",
+         "source": "/dev/vda",
+         "fstype": "ext4",
+         "size": 270553174016,
+         "used": 12732731392,
+         "avail": 28401344512,
+         "use%": "5%"
+      },
+      {
+         "target": "/srv/app data",
+         "source": "/dev/loop0",
+         "fstype": "ext4",
+         "size": 27234304,
+         "used": 24576,
+         "avail": 24866816,
+         "use%": "0%"
+      }
+   ]
+}
