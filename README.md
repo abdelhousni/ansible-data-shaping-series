@@ -37,27 +37,72 @@ Related entry, outside the series:
 
 ## Running them
 
-Everything runs on the local machine and changes nothing outside the
-example's `out/` directory. From the repository root:
+From the repository root, once the lab below is in place:
 
 ```sh
-python3 -m venv .venv
-.venv/bin/pip install --require-hashes -r requirements.txt
-.venv/bin/ansible-galaxy role install -r requirements.yml -p roles
-.venv/bin/ansible-galaxy collection install -r requirements.yml -p collections
+./lab/check.sh                                 # reports anything missing
 PATH="$PWD/.venv/bin:$PATH" 01-readable-sudoers-with-dict-kv/run.sh
 ```
 
-- `requirements.txt` locks ansible-core 2.21.4 and its dependencies, with
-  hashes. It's compiled from `requirements.in` with uv.
-- `requirements.yml` pins community.general 13.4.0 and four Linux System
-  Roles: `sudo` 1.5.0, `kernel_settings` 1.6.0, `postgresql` 1.9.0 and
-  `podman` 1.14.3.
-- Each `run.sh` prints what its entry says about the result. Its
-  `expected.txt` holds the output it gave when the entry was written.
+Everything runs on the local machine and changes nothing outside the
+example's `out/` directory. Each `run.sh` prints what its entry says about
+the result; its `expected.txt` holds the output it gave when the entry was
+written.
 
 The [`examples`](.github/workflows/examples.yml) workflow runs every
 `run.sh` on each push and compares the output with `expected.txt`. It also
 checks that `requirements.txt` still matches `requirements.in`, and its
 `sudoers-policy` job runs `sudo-shell-escapes/check-sudoers.sh` as a gate
 on the sudoers files rendered from the safer rules.
+
+## Local lab
+
+What the examples need, and how to set it up on your own machine. This is
+the setup the entries were tested with, on Ubuntu 24.04; GitHub's
+`ubuntu-24.04` runner, where CI runs, provides the same.
+
+| What | Version tested | Needed by | How |
+|---|---|---|---|
+| Python | 3.12 | every example | your distribution's `python3.12`; ansible-core 2.21 needs 3.12 or newer |
+| ansible-core, netaddr, jmespath | 2.21.4, 1.3.0, 1.1.0 | every example; netaddr for 14, jmespath for 13 | in a virtualenv, from the locked `requirements.txt` (below) |
+| community.general, ansible.utils | 13.4.0, 6.1.1 | most examples; ansible.utils for 14 | `requirements.yml`, installed into `collections/` |
+| Linux System Roles | `sudo` 1.5.0, `kernel_settings` 1.6.0, `postgresql` 1.9.0, `podman` 1.14.3 | 01, 02, 03, 05, 08, 11, sudo-shell-escapes | `requirements.yml`, installed into `roles/`; needs git |
+| git | 2.43 | installing the roles | your distribution's `git` package |
+| sudo (`visudo`, `cvtsudoers`) | 1.9.15 | 01, 08, sudo-shell-escapes | your distribution's `sudo` package, 1.9 or newer |
+| jq | 1.7 | sudo-shell-escapes | your distribution's `jq` package |
+
+```sh
+python3.12 -m venv .venv
+.venv/bin/pip install --require-hashes -r requirements.txt
+.venv/bin/ansible-galaxy role install -r requirements.yml -p roles
+.venv/bin/ansible-galaxy collection install -r requirements.yml -p collections
+./lab/check.sh
+```
+
+- **The virtualenv** holds exactly the packages in `requirements.txt`, with
+  their hashes. It's compiled from `requirements.in` with uv; CI's `lock`
+  job fails if the two drift apart.
+- **`roles/` and `collections/`** are next to the examples, and each
+  example's `ansible.cfg` points at them, so nothing is installed in your
+  home directory.
+- **No server is needed.** Every example connects to its hosts locally, and
+  works on recorded command and API output in `fixtures/` where the entry
+  used a real system (Proxmox, Foreman, `df`, `findmnt`). The roles are
+  used for their templates and input checks, rendered into `out/`; nothing
+  is installed on the machine.
+- **`visudo` runs as your user**, to check the rendered sudoers files with
+  `visudo -cf`; it needs no root.
+- **`lab/check.sh`** checks each line of the table and prints the command
+  for whatever is missing. It changes nothing.
+
+Two things to know:
+
+- **Part 16's systemd check runs only in CI.** `16-text-on-lists/ci/systemd-check.sh`
+  installs two units and starts them, so it needs root and a machine booted
+  with systemd: a VM or a disposable host, not a container. `16-text-on-lists/run.sh`
+  itself runs anywhere.
+- **"Ansible requires blocking IO on stdin/stdout/stderr"**: some terminals
+  and sandboxes hand Ansible non-blocking output, and it refuses to run.
+  The `run.sh` scripts send Ansible's output to files, which avoids it.
+  To run a playbook by hand in such an environment, redirect its output to
+  a file too.
