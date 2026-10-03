@@ -4,7 +4,8 @@ Companion examples for the "Shaping data in Ansible" series on
 til.housni.eu (abdelhousni/til, `ansible/*.md`). Each example is `NN-name/`
 with a `run.sh`, an `expected.txt`, a README, a CI matrix entry, a row in
 the root README table, and rows in `INDEX.md` for each technique and
-pitfall it shows.
+pitfall it shows. An example that needs a new tool, collection or role adds
+it to the README's "Local lab" table and to `lab/check.sh`.
 
 ## Write, review and refactor with the Lola Ansible skills
 
