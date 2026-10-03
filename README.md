@@ -90,6 +90,13 @@ python3.12 -m venv .venv
   used a real system (Proxmox, Foreman, `df`, `findmnt`). The roles are
   used for their templates and input checks, rendered into `out/`; nothing
   is installed on the machine.
+- **No container runtime either: no Docker, Podman or Kubernetes.** Part 3's
+  quadlets and the `podman` system role are data: the examples render them
+  into `out/` and never start a container. An example that starts target
+  hosts would follow the companion inventory series, whose
+  [`lab/runtime.sh`](https://github.com/abdelhousni/ansible-inventory-series/blob/main/lab/runtime.sh)
+  runs them on Docker, Podman or a kind cluster, chosen with `LAB_RUNTIME`
+  ([setup of each runtime](https://github.com/abdelhousni/ansible-inventory-series/blob/main/lab/RUNTIMES.md)).
 - **`visudo` runs as your user**, to check the rendered sudoers files with
   `visudo -cf`; it needs no root.
 - **`lab/check.sh`** checks each line of the table and prints the command
