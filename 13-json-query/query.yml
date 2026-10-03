@@ -4,7 +4,6 @@
 # whether they agree, and the json_query pitfalls to out/query.txt.
 - name: Compare json_query with native filters
   hosts: localhost
-  connection: local
   gather_facts: false
   vars:
     vms: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"

@@ -80,8 +80,8 @@
     - name: Try selectattr on an attribute some guests lack
       block:
         - name: Select the guests in pool1
-          ansible.builtin.debug:
-            msg: "{{ proxmox_vms | selectattr('pool', 'equalto', 'pool1') | list }}"
+          ansible.builtin.set_fact:
+            pool1_guests: "{{ proxmox_vms | selectattr('pool', 'equalto', 'pool1') | list }}"
       rescue:
         - name: Keep the error message
           ansible.builtin.set_fact:
@@ -90,8 +90,8 @@
     - name: Try map(attribute=) on the same attribute
       block:
         - name: List the pool of every guest
-          ansible.builtin.debug:
-            msg: "{{ proxmox_vms | map(attribute='pool') | list }}"
+          ansible.builtin.set_fact:
+            every_pool: "{{ proxmox_vms | map(attribute='pool') | list }}"
       rescue:
         - name: Keep the error message
           ansible.builtin.set_fact:

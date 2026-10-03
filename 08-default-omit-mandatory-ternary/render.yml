@@ -4,7 +4,6 @@
 # template, validated by visudo, and writes what happened to out/render.txt.
 - name: Render sudo rules with optional fields
   hosts: localhost
-  connection: local
   gather_facts: false
   vars_files:
     - vars/rules.yml
@@ -76,14 +75,17 @@
     - name: Try mandatory on the forgotten rule's commands
       block:
         - name: Require commands
-          ansible.builtin.debug:
-            msg: "{{ postgres_sudo_rule_forgotten.commands
+          ansible.builtin.set_fact:
+            forgotten_commands: "{{ postgres_sudo_rule_forgotten.commands
               | mandatory('rule ' ~ postgres_sudo_rule_forgotten.name ~ ' has no commands') }}"
       rescue:
         - name: Keep the error
           ansible.builtin.set_fact:
             mandatory_error: "{{ ansible_failed_result.msg | regex_search(the_error) }}"
 
+    # A set_fact loop, which part 15 advises against: each rule needs its own
+    # defaults, ternary and mandatory, which one filter chain can't express
+    # readably. It runs once, on a handful of rules.
     - name: Build each rule's user specification, with empty lists for what isn't set
       ansible.builtin.set_fact:
         sudo_specs: "{{ sudo_specs | default([]) + [{

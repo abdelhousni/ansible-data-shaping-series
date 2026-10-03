@@ -4,7 +4,6 @@
 # files land in out/.
 - name: Render sudoers drop-ins with the linux-system-roles.sudo template
   hosts: localhost
-  connection: local
   gather_facts: false
   vars_files:
     - "vars/{{ variant }}.yml"

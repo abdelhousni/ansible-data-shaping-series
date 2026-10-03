@@ -4,7 +4,6 @@
 # conversion did to out/<run_label>.txt. run.sh runs it with each kind of -e.
 - name: Read switches from extra vars
   hosts: localhost
-  connection: local
   gather_facts: false
   vars:
     restart: true

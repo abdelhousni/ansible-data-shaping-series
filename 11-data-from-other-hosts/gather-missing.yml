@@ -8,6 +8,12 @@
     app_without_facts: "{{ groups['app'] | map('extract', hostvars) | rejectattr('ansible_facts.system', 'defined')
       | map(attribute='inventory_hostname') | list }}"
   tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
     - name: Record which app hosts have no facts
       ansible.builtin.set_fact:
         before: "{{ app_without_facts }}"

@@ -4,7 +4,6 @@
 # node's subnet. Writes everything to out/net.txt.
 - name: Shape network data with ansible.utils
   hosts: localhost
-  connection: local
   gather_facts: false
   vars_files:
     - vars/network.yml
