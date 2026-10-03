@@ -4,7 +4,6 @@
 # whether Ansible saw a change.
 - name: Write the Caddy configuration
   hosts: localhost
-  connection: local
   gather_facts: false
   vars_files: [vars/caddy.yml]
   vars:

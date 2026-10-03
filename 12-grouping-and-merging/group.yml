@@ -4,7 +4,6 @@
 # errors, to out/group.txt.
 - name: Group the Proxmox guests
   hosts: localhost
-  connection: local
   gather_facts: false
   vars:
     guests: "{{ lookup('file', 'fixtures/proxmox_vms.json') | from_json }}"

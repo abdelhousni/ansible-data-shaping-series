@@ -24,8 +24,8 @@
     - name: Try subelements without skip_missing
       block:
         - name: Pair every container with each of its volumes
-          ansible.builtin.debug:
-            msg: "{{ quadlet_containers | subelements('Container.Volume') }}"
+          ansible.builtin.set_fact:
+            volume_pairs: "{{ quadlet_containers | subelements('Container.Volume') }}"
       rescue:
         - name: Keep the error message
           ansible.builtin.set_fact:
@@ -34,8 +34,8 @@
     - name: Try subelements with skip_missing
       block:
         - name: Pair every container with each of its volumes, skipping containers without any
-          ansible.builtin.debug:
-            msg: "{{ quadlet_containers | subelements('Container.Volume', skip_missing=True) }}"
+          ansible.builtin.set_fact:
+            volume_pairs: "{{ quadlet_containers | subelements('Container.Volume', skip_missing=True) }}"
       rescue:
         - name: Keep the error message
           ansible.builtin.set_fact:

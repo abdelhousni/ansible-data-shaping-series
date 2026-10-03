@@ -4,7 +4,6 @@
 # and writes the results and the errors to out/merge.txt.
 - name: Merge declared data into the Proxmox guests
   hosts: localhost
-  connection: local
   gather_facts: false
   vars_files:
     - vars/declared.yml

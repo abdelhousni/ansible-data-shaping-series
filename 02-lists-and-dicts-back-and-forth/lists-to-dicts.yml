@@ -43,13 +43,15 @@
         dest: out/lists-to-dicts.txt
         mode: "0644"
         content: |
-          foreman: all_parameters is a {{ foreman_host.all_parameters | type_debug }} of {{ foreman_host.all_parameters | length }}
+          foreman: all_parameters is a {{ foreman_host.all_parameters | type_debug }} of {{ foreman_host.all_parameters
+            | length }}
           foreman: items2dict gives a {{ foreman_params | type_debug }}: {{ foreman_params }}
           foreman: host_registration_insights = {{ foreman_params['host_registration_insights'] }}
           proxmox: name -> vmid: {{ vmid_by_name }}
           proxmox: vmid -> name: {{ name_by_vmid }}, keys are {{ name_by_vmid.keys() | first | type_debug }}
           proxmox: two VMs named test1: {{ with_duplicate | items2dict(key_name='name', value_name='vmid') }}
-          podman: quadlet sections left: {{ adminer_spec | dict2items | rejectattr('key', 'match', __del_params) | list | items2dict }}
+          podman: quadlet sections left: {{ adminer_spec | dict2items
+            | rejectattr('key', 'match', __del_params) | list | items2dict }}
           zip: {{ new_vm_names | zip(range(300, 303)) | type_debug }}: {{ new_vm_names | zip(range(300, 303)) }}
           zip + dict: {{ dict(new_vm_names | zip(range(300, 303))) }}
           zip + dict, one ID short: {{ dict(new_vm_names | zip(range(300, 302))) }}

@@ -3,7 +3,6 @@
 # compares, into out/variants/. run.sh checks which ones are JSON.
 - name: Write the configuration every way
   hosts: localhost
-  connection: local
   gather_facts: false
   vars_files: [vars/caddy.yml]
   vars:

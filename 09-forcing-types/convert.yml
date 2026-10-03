@@ -3,7 +3,6 @@
 # written to out/convert.txt.
 - name: Convert strings
   hosts: localhost
-  connection: local
   gather_facts: false
   vars:
     int_cases: ["200", " 200 ", "4GB", "2.5", "0x1F"]
