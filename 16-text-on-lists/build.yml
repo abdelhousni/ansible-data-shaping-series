@@ -9,7 +9,7 @@
     - vars/backup.yml
   vars:
     # --format=custom --compress=6
-    option_args: "{{ pg_backup_options.items() | map('join', '=') | map('regex_replace', '^', '--') | list }}"
+    option_args: "{{ pg_backup_options | items | map('join', '=') | map('regex_replace', '^', '--') | list }}"
     # --no-owner
     flag_args: "{{ pg_backup_flags | map('regex_replace', '_', '-') | map('regex_replace', '^', '--') | list }}"
     # --exclude-table=<name> for each table
@@ -23,9 +23,11 @@
       | map('regex_replace', '^(.*)$', '"\1"') | list }}
     # Written by hand, so not escaped: %i is the unit's instance, the database
     instance_args: ["--file=/srv/backups/%i.dump", "%i"]
-    exec_start_naive: "{{ ([pg_backup_command] + option_args + flag_args + table_args + instance_args) | join(' ') }}"
-    exec_start_escaped: "{{ ([pg_backup_command] + option_args + flag_args + table_args_escaped + instance_args)
-      | join(' ') }}"
+    # The command and the arguments that never need escaping; the two lines
+    # differ only in the table arguments
+    head_args: "{{ [pg_backup_command] + option_args + flag_args }}"
+    exec_start_naive: "{{ (head_args + table_args + instance_args) | join(' ') }}"
+    exec_start_escaped: "{{ (head_args + table_args_escaped + instance_args) | join(' ') }}"
   tasks:
     - name: Make out/
       ansible.builtin.file:
@@ -39,7 +41,7 @@
         dest: "out/pg-backup-{{ item.key }}@.service"
         mode: "0644"
       vars:
-        exec_start: "{{ item.value }}"
+        pg_backup_exec_start: "{{ item.value }}"
       loop: "{{ {'naive': exec_start_naive, 'escaped': exec_start_escaped} | dict2items }}"
       loop_control:
         label: "{{ item.key }}"
