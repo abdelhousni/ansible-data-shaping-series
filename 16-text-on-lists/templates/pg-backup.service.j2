@@ -1,0 +1,9 @@
+{{ ansible_managed | comment }}
+# Backs up the database named by the instance: pg-backup@app.service backs
+# up app, into /srv/backups/app.dump.
+[Unit]
+Description=pg_dump of %i
+
+[Service]
+Type=oneshot
+ExecStart={{ pg_backup_exec_start }}

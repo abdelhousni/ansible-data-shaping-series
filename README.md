@@ -22,6 +22,7 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`13-json-query/`](13-json-query/) | [Part 13: json_query compared with native filters](https://til.housni.eu/ansible/json-query-jmespath-versus-native-filters.html) |
 | [`14-network-data/`](14-network-data/) | [Part 14: Network data with ansible.utils](https://til.housni.eu/ansible/ansible-utils-ipaddr-pg-hba-subnets-proxmox.html) |
 | [`15-set-fact-or-expression/`](15-set-fact-or-expression/) | [Part 15: set_fact in a loop or one expression](https://til.housni.eu/ansible/set-fact-loop-or-one-expression-pg-hba.html) |
+| [`16-text-on-lists/`](16-text-on-lists/) | [Part 16: Text on lists, building ExecStart lines](https://til.housni.eu/ansible/execstart-lines-regex-replace-join-systemd.html) |
 
 Related entry, outside the series:
 
