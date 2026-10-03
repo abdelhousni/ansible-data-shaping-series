@@ -1,0 +1,70 @@
+---
+# Builds the ExecStart= line of a pg_dump backup unit from vars/backup.yml,
+# once joined as it is and once escaped for systemd, writes both template
+# units to out/, and the lines to out/build.txt.
+- name: Build ExecStart lines from lists of options
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/backup.yml
+  vars:
+    # --format=custom --compress=6
+    option_args: "{{ pg_backup_options.items() | map('join', '=') | map('regex_replace', '^', '--') | list }}"
+    # --no-owner
+    flag_args: "{{ pg_backup_flags | map('regex_replace', '_', '-') | map('regex_replace', '^', '--') | list }}"
+    # --exclude-table=<name> for each table
+    table_args: "{{ pg_backup_exclude_tables | map('regex_replace', '^', '--exclude-table=') | list }}"
+    # The same, escaped for systemd: % and $ doubled, then each argument in
+    # double quotes. Enough for these names; one containing " or \ would
+    # need those escaped too. In a YAML block scalar, \1 reaches the regex as
+    # it is written.
+    table_args_escaped: >-
+      {{ table_args | map('replace', '%', '%%') | map('replace', '$', '$$')
+      | map('regex_replace', '^(.*)$', '"\1"') | list }}
+    # Written by hand, so not escaped: %i is the unit's instance, the database
+    instance_args: ["--file=/srv/backups/%i.dump", "%i"]
+    exec_start_naive: "{{ ([pg_backup_command] + option_args + flag_args + table_args + instance_args) | join(' ') }}"
+    exec_start_escaped: "{{ ([pg_backup_command] + option_args + flag_args + table_args_escaped + instance_args)
+      | join(' ') }}"
+  tasks:
+    - name: Make out/
+      ansible.builtin.file:
+        path: out
+        state: directory
+        mode: "0755"
+
+    - name: Write both template units
+      ansible.builtin.template:
+        src: pg-backup.service.j2
+        dest: "out/pg-backup-{{ item.key }}@.service"
+        mode: "0644"
+      vars:
+        exec_start: "{{ item.value }}"
+      loop: "{{ {'naive': exec_start_naive, 'escaped': exec_start_escaped} | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Map format over the table names
+      block:
+        - name: Format each table name
+          ansible.builtin.set_fact:
+            format_mapped: "{{ pg_backup_exclude_tables | map('format') | list }}"
+      rescue:
+        - name: Keep the error
+          ansible.builtin.set_fact:
+            format_mapped: "{{ ansible_failed_result.msg | regex_replace('^.*failed: ', 'error: ') }}"
+
+    - name: Write out/build.txt
+      ansible.builtin.copy:
+        dest: out/build.txt
+        mode: "0644"
+        content: |
+          option_args: {{ option_args }}
+          flag_args: {{ flag_args }}
+          table_args: {{ table_args }}
+          table_args_escaped: {{ table_args_escaped }}
+          naive:   ExecStart={{ exec_start_naive }}
+          escaped: ExecStart={{ exec_start_escaped }}
+          map('format'), each table name used as the format: {{ format_mapped }}
+          one value with format: {{ '--exclude-table=%s' | format(pg_backup_exclude_tables | first) }}
+          one value with ~: {{ '--exclude-table=' ~ pg_backup_exclude_tables | first }}

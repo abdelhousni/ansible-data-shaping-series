@@ -48,6 +48,7 @@ jobs:
           - 13-json-query
           - 14-network-data
           - 15-set-fact-or-expression
+          - 16-text-on-lists
           - sudo-shell-escapes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -66,6 +67,27 @@ jobs:
         env:
           EXAMPLE: ${{ matrix.example }}
         run: PATH="$PWD/.venv/bin:$PATH" "$EXAMPLE/run.sh" | diff "$EXAMPLE/expected.txt" -
+
+  # Part 16: run both units under systemd and check the arguments each
+  # ExecStart= line passed to the program
+  systemd-execstart:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install ansible-core and the collection
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --require-hashes -r requirements.txt
+          .venv/bin/ansible-galaxy collection install -r requirements.yml -p collections
+      - name: Run the units and compare the arguments
+        run: |
+          sudo PATH="$PWD/.venv/bin:$PATH" 16-text-on-lists/ci/systemd-check.sh | tee systemd.txt
+          diff 16-text-on-lists/ci/expected-systemd.txt systemd.txt
 
   # The gate a deployment pipeline would run: render the sudoers files the
   # playbook installs, then refuse any rule that can hand out a root shell.

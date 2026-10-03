@@ -1,0 +1,9 @@
+option_args: ['--format=custom', '--compress=6']
+flag_args: ['--no-owner']
+table_args: ['--exclude-table=audit log', '--exclude-table=tmp$work', '--exclude-table=cache_50%']
+table_args_escaped: ['"--exclude-table=audit log"', '"--exclude-table=tmp$$work"', '"--exclude-table=cache_50%%"']
+naive:   ExecStart=/usr/bin/pg_dump --format=custom --compress=6 --no-owner --exclude-table=audit log --exclude-table=tmp$work --exclude-table=cache_50% --file=/srv/backups/%i.dump %i
+escaped: ExecStart=/usr/bin/pg_dump --format=custom --compress=6 --no-owner "--exclude-table=audit log" "--exclude-table=tmp$$work" "--exclude-table=cache_50%%" --file=/srv/backups/%i.dump %i
+map('format'), each table name used as the format: error: incomplete format
+one value with format: --exclude-table=audit log
+one value with ~: --exclude-table=audit log

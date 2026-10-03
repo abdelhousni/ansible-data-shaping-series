@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""Stands in for pg_dump in the systemd check: appends the arguments it
+received, one per line and quoted, to /run/show-argv.txt."""
+import sys
+
+with open("/run/show-argv.txt", "a", encoding="utf-8") as out:
+    for arg in sys.argv[1:]:
+        out.write(repr(arg) + "\n")

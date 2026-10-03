@@ -1,0 +1,19 @@
+---
+# pg_dump options for a nightly backup.
+# Options that take a value, as option: value
+pg_backup_options:
+  format: custom
+  compress: 6
+# Options without a value
+pg_backup_flags:
+  - no_owner
+# Tables left out of the dump. All three are names PostgreSQL accepts when
+# quoted: one with a space, one with a dollar sign, one with a percent sign.
+pg_backup_exclude_tables:
+  - audit log
+  - tmp$work
+  - cache_50%
+
+# What ExecStart= runs. run.sh keeps pg_dump; the systemd check in CI points
+# it at a script that prints the arguments it receives.
+pg_backup_command: /usr/bin/pg_dump
