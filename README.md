@@ -24,6 +24,11 @@ PostgreSQL, Foreman, Proxmox VE and Podman.
 | [`15-set-fact-or-expression/`](15-set-fact-or-expression/) | [Part 15: set_fact in a loop or one expression](https://til.housni.eu/ansible/set-fact-loop-or-one-expression-pg-hba.html) |
 | [`16-text-on-lists/`](16-text-on-lists/) | [Part 16: Text on lists, building ExecStart lines](https://til.housni.eu/ansible/execstart-lines-regex-replace-join-systemd.html) |
 
+Looking for a technique rather than an entry? [INDEX.md](INDEX.md) maps
+each problem ("turn a list of dicts into a lookup dict", "find drift between
+two lists") to the filter that solves it and the file that runs it, with the
+pitfalls each example records.
+
 Related entry, outside the series:
 
 | Directory | Entry |
